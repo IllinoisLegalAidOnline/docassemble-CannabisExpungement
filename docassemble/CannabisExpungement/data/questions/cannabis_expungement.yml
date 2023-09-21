@@ -101,11 +101,13 @@ code: |
       probation_kickout
   if convictions[i].sentence_check == True:
     sentence_kickout
+  if convictions[i].conditions_check == False:
+    conditions_kickout
+    
   convictions[i].case_number
   convictions[i].arrest_date
   if convictions[i].other_name_check == False:
     convictions[i].alternate_name.name.first
-  
   convictions[i].complete = True
 ---
 id: welcome
@@ -369,6 +371,36 @@ fields:
   - no label: convictions[i].sentence_check
     datatype: yesnoradio
 ---
+#The wording of this question seems off? This is how it was phrased in A2J, but shouldn't it be "conditions of your release" or something similar?
+id: conditions check
+question: |
+  % if i == 0:
+  Have you completed all conditions of your offense?
+  % else:
+  Have you completed all conditions of your ${ordinal(i)} offense?
+  % endif
+subquestion: |
+  Some sentences of probation or conditional discharge may require you to complete additional conditions before your sentence is discharged.
+
+  For example, you may have been ordered to do community service, undergo treatment or counseling, or be monitored.
+fields:
+  - no label: convictions[i].conditions_check
+    datatype: yesnoradio
+---
+#The following kickouts all occurr within the gather loop for the convictions. It seems like poor design to have the kickout event recur like that. Is there a way to add a button that just restarts the iteration?
+---
+id: conditions kickout
+event: conditions_kickout
+question: |
+  Sorry
+subquestion: |
+  A conviction cannot be expunged if you have not completed all conditions for it.
+  
+  Click **Back** if you made a mistake. Or you can talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
+buttons:
+  - Exit: exit
+  - Restart: restart
+---
 id: active sentence kickout
 event: sentence_kickout
 question: |
@@ -513,7 +545,7 @@ id: hearing date time
 question: |
   When is your court hearing?
 subquestion: |
-  IF you do not have a court hearing scheduled, you can leave this blank.
+  If you do not have a court hearing scheduled, you can leave this blank.
 fields:
   - Date: hearing_date
     datatype: date
@@ -550,21 +582,39 @@ choices:
   - Sixth Municipal District, 16501 South Kedzie Parkway, Markham: 20
   - George N. Leighton Criminal Court Building, 2600 S. California Avenue, Chicago: 22
 ---
+ #  if cook_district == 15:
+ #    court_house_address = "Daley Center, 50 W. Washington Street, Chicago, IL 60602"
+ #  elif cook_district == 16:
+ #    court_house_address = "5600 Old Orchard Road, Skokie, IL 60077"
+ #  elif cook_district == 17:
+ #    court_house_address = "2121 Euclid Avenue, Rolling Meadows, IL 60008"
+ #  elif cook_district == 18:
+ #    court_house_address = "1500 Maybrook Drive, Maywood, IL 60153"
+ #  elif cook_district == 19:
+ #    court_house_address = "10220 S. 76th Avenue, Bridgeview, IL 60455"
+ #  elif cook_district == 20:
+ #    court_house_address = "16501 South Kedzie Parkway, Markham, IL 60428"
+ #  elif cook_district == 22:
+ #    court_house_address = "George N. Leighton Criminal Court Building, 2600 S. California Avenue, Chicago, IL 60608"
+---
 #I think there is a better way to handle this.
 depends on:
   - cook_district
   - filing_location.trial_court_index
 code: |
-  if filing_location.trial_court_index == -1:
-    court_storage = court_list.as_court('trial_court', cook_district)
+
+  if filing_location.trial_court_index == "-1":
+    trial_court = court_list.as_court('trial_court', cook_district)
+
   else:
-    court_storage = court_list.as_court('trial_court', filing_location.trial_court_index)
+    trial_court = court_list.as_court('trial_court', filing_location.trial_court_index)
+
     
-  court_name = str(court_storage.name)
-  court_street_address = str(court_storage.address.address)
-  court_city = str(court_storage.address.city)
-  court_state = str(court_storage.address.state)
-  court_zip = str(court_storage.address.zip)
+  court_name = str(trial_court.name)
+  court_street_address = str(trial_court.address.address)
+  court_city = str(trial_court.address.city)
+  court_state = str(trial_court.address.state)
+  court_zip = str(trial_court.address.zip)
   court_house_address = court_name + ", " + court_street_address + ", " + court_city + ", " + court_state + " " + court_zip
 ---
 id: hearing courtroom
@@ -649,6 +699,7 @@ fields:
       - Pacific Islander: Pacific Islander
       - 2 or more races: Multiracial
       - White: White
+      - Other: Other
   - Other: users[0].other_race
     show if: 
       variable: users[0].race
@@ -742,8 +793,8 @@ subquestion: |
 fields:
   - Missed opportunities: missed_opportunities
     input type: area
-    rows: 30
-    maxlength: 2400
+    rows: 23
+    maxlength: 1200
 ---
 template: opportunities_help
 subject: |
@@ -779,7 +830,7 @@ terms:
 ---
 template: signature_help
 subject: |
-  **What does it mean to sign the Motion to Vacate and Expungement?**
+  **What does it mean to sign the Motion to Vacate and Expunge?**
 content: |  
   DEVELOPER'S NOTE: Is 735 ILCS 5/1-109 the correct rule here?
   
@@ -796,6 +847,8 @@ code: |
   conviction_time_storage = date_difference(starting='1/1/1901', ending=today())
   any_misdemeanors = False
   any_felonies = False
+  alternate_names_list.clear()
+  
   for person in convictions:
     temp_arrest_time_ref = date_difference(starting=users[0].birthdate, ending=person.arrest_date)
     if temp_arrest_time_ref.years > arrest_time_storage.years:
@@ -904,7 +957,7 @@ attachment:
   editable: False
   pdf template file: CXP_Motion_to_Vacate_and_Expunge.pdf
   fields:
-      - "filing_county": ${ filing_location.county }
+      - "filing_county_without_county": ${filing_location.county}
       - "user_name": ${users[0].name.full(middle='full')}
       - "additional_names": ${comma_and_list(alternate_names_list)}
       - "new_case_number": ${new_case_number if new_number_check == True else ""}
@@ -1027,13 +1080,14 @@ attachment:
   editable: False
   pdf template file: CXP_Notice_of_Court_Date_for_Motion.pdf
   fields:
-      - "filing_county": ${ filing_location.county }
+      - "filing_county_without_county": ${filing_location.county}
       - "user_name": ${users[0].name.full(middle='full')}
       - "additional_names": ${comma_and_list(alternate_names_list)}
       - "new_case_number": ${new_case_number if new_number_check == True else ""}
       - "user_birth": ${users[0].birthdate}
       - "user_race": ${users[0].other_race if users[0].race == "Other" else users[0].race}
       - "user_gender": ${users[0].other_gender if users[0].gender == "Other" else users[0].gender}
+      - "states_attorney_address": ${states_attorney_address.on_one_line(bare=True)}
       - "case_number_one": ${convictions[0].number_for_form}
       - "case_number_two": ${convictions[1].number_for_form}
       - "case_number_three": ${convictions[2].number_for_form}
@@ -1073,7 +1127,7 @@ attachment:
   editable: False
   pdf template file: CXP_Order_Granting_or_Denying_Motion.pdf
   fields:
-      - "filing_county": ${ filing_location.county }
+      - "filing_county_without_county": ${filing_location.county}
       - "user_name": ${users[0].name.full(middle='full')}
       - "additional_names": ${comma_and_list(alternate_names_list)}
       - "new_case_number": ${new_case_number if new_number_check == True else ""}
@@ -1107,7 +1161,7 @@ attachment:
   editable: False
   pdf template file: CXP_Additional_Cannabis_Convictions.pdf
   fields:
-      - "filing_county": ${ filing_location.county }
+      - "filing_county_without_county": ${filing_location.county}
       - "user_name": ${users[0].name.full(middle='full')}
       - "additional_names": ${comma_and_list(alternate_names_list)}
       - "new_case_number": ${new_case_number if new_number_check == True else ""}
@@ -1217,9 +1271,9 @@ attachment:
   filename: additional_notice
   skip undefined: True
   editable: False
-  pdf template file: CXP_Additional_Notice_of_Court_Date_for_Motion.pdf
+  pdf template file: CXP_Additional_Notice_of_Court_Date.pdf
   fields:
-      - "filing_county": ${ filing_location.county }
+      - "filing_county_without_county": ${filing_location.county}
       - "user_name": ${users[0].name.full(middle='full')}
       - "additional_names": ${comma_and_list(alternate_names_list)}
       - "new_case_number": ${new_case_number if new_number_check == True else ""}
@@ -1253,7 +1307,7 @@ attachment:
   editable: False
   pdf template file: CXP_Order_Granting_or_Denying_Motion.pdf
   fields:
-      - "filing_county": ${ filing_location.county }
+      - "filing_county_without_county": ${filing_location.county}
       - "user_name": ${users[0].name.full(middle='full')}
       - "additional_names": ${comma_and_list(alternate_names_list)}
       - "new_case_number": ${new_case_number if new_number_check == True else ""}
@@ -1289,7 +1343,8 @@ review:
   - label: Edit
     fields:
       - filing_location.trial_court_index
-      - filing_location.county
+      - recompute:
+        - filing_location.county
     button: |
       **Which county are you filing your motion in?**
       ${end_in_county(filing_location.county)}
@@ -1315,19 +1370,19 @@ review:
   - Edit: cook_district
     button: |
       **Which Cook County courthouse will you file in?**
-      % if cook_district == 15:
+      % if cook_district == "15":
       First Municipal District, Daley Center, 50 W. Washington Street, Chicago:
-      % elif cook_district == 16:
+      % elif cook_district == "16":
       Second Municipal District, 5600 Old Orchard Road, Skokie
-      % elif cook_district == 17:
+      % elif cook_district == "17":
       Third Municipal District, 2121 Euclid Avenue, Rolling Meadows
-      % elif cook_district == 18:
+      % elif cook_district == "18":
       Fourth Municipal District, 1500 Maybrook Drive, Maywood
-      % elif cook_district == 19:
+      % elif cook_district == "19":
       Fifth Municipal District, 10220 S. 76th Avenue, Bridgeview
-      % elif cook_district == 20:
+      % elif cook_district == "20":
       Sixth Municipal District, 16501 South Kedzie Parkway, Markham
-      % elif cook_district == 22:
+      % elif cook_district == "22":
       George N. Leighton Criminal Court Building, 2600 S. California Avenue, Chicago
       % endif
     show if: filing_location.county == "Cook"
@@ -1345,7 +1400,7 @@ review:
       % if states_attorney_address.address == "" and states_attorney_address.unit == "" and states_attorney_address.city == "" and states_attorney_address.zip == "":
       None entered
       % else:
-      states_attorney_address.on_one_line(bare=True)}
+      ${states_attorney_address.on_one_line(bare=True)}
       % endif
   - Edit: new_number_check
     button: |
@@ -1391,6 +1446,7 @@ review:
     button: |
       **Your contact information:**
       % if users[0].phone_number != "" and users[0].has_email_address == True:
+      
       * Phone number: ${phone_number_formatted(users[0].phone_number)}
       * Email address: ${users[0].email}
       % elif users[0].phone_number != "" and users[0].has_email_address == False:
@@ -1484,7 +1540,7 @@ subquestion: |
 ---
 section: Conviction info
 id: review convictions
-event: section_convictions
+event: section_conviction
 question: |
   Conviction info
 subquestion: |
@@ -1497,7 +1553,8 @@ review:
   - label: Edit
     fields:
       - filing_location.trial_court_index
-      - filing_location.county
+      - recompute:
+        - filing_location.county
     button: |
       **Which county are you filing your motion in?**
       ${end_in_county(filing_location.county)}
@@ -1537,19 +1594,19 @@ review:
   - Edit: cook_district
     button: |
       **Which Cook County courthouse will you file in?**
-      % if cook_district == 15:
+      % if cook_district == "15":
       First Municipal District, Daley Center, 50 W. Washington Street, Chicago:
-      % elif cook_district == 16:
+      % elif cook_district == "16":
       Second Municipal District, 5600 Old Orchard Road, Skokie
-      % elif cook_district == 17:
+      % elif cook_district == "17":
       Third Municipal District, 2121 Euclid Avenue, Rolling Meadows
-      % elif cook_district == 18:
+      % elif cook_district == "18":
       Fourth Municipal District, 1500 Maybrook Drive, Maywood
-      % elif cook_district == 19:
+      % elif cook_district == "19":
       Fifth Municipal District, 10220 S. 76th Avenue, Bridgeview
-      % elif cook_district == 20:
+      % elif cook_district == "20":
       Sixth Municipal District, 16501 South Kedzie Parkway, Markham
-      % elif cook_district == 22:
+      % elif cook_district == "22":
       George N. Leighton Criminal Court Building, 2600 S. California Avenue, Chicago
       % endif
     show if: filing_location.county == "Cook"
@@ -1567,7 +1624,7 @@ review:
       % if states_attorney_address.address == "" and states_attorney_address.unit == "" and states_attorney_address.city == "" and states_attorney_address.zip == "":
       None entered
       % else:
-      states_attorney_address.on_one_line(bare=True)}
+      ${states_attorney_address.on_one_line(bare=True)}
       % endif
 ---
 section: Filing
@@ -1631,6 +1688,7 @@ review:
     button: |
       **Your contact information:**
       % if users[0].phone_number != "" and users[0].has_email_address == True:
+      
       * Phone number: ${phone_number_formatted(users[0].phone_number)}
       * Email address: ${users[0].email}
       % elif users[0].phone_number != "" and users[0].has_email_address == False:
