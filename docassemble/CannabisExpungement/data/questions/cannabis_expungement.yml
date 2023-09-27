@@ -19,8 +19,9 @@ objects:
   - convictions[i].alternate_name: ALIndividual
   - states_attorney_address: ALAddress
   - court_list: ALCourtLoader.using(file_name='docassemble.ILAO:data/sources/il_courts.xlsx')
-  - alternate_names_list: DAList
+  - alternate_names_list: ALPeopleList.using(object_type=ALIndividual, there_is_another=False)
   - court_house_address: DAObject
+  - qualified_convictions: ALPeopleList.using(object_type=ALIndividual, complete_attribute=['complete'], there_are_any=True, there_is_another=False)
 ---
 code: |
   al_form_type = 'existing_case'
@@ -32,7 +33,6 @@ code: |
   allowed_courts = ['Circuit']
 ---
 # Road map
-#Not updated to this program's sections
 sections:
   - section_intro: Start
   - section_conviction: Conviction info
@@ -57,15 +57,31 @@ code: |
   
   nav.set_section('section_conviction')
   set_progress(20)
-  filing_location.county
+  if filing_location.county == "Cook":
+    cook_district
   convictions.gather()
+  if convictions.number_gathered() == 1:
+    if convictions[0].other_name_check == False:
+      convictions[0].alternate_name.name.first
+  else:
+    if need_a_name_list_check == True:
+      name_limit = 0
+      for person in convictions:
+        if name_limit < 8:
+          if person.qualified == True:
+            if person.other_name_check == False:
+              name_limit += 1
+              person.alternate_name.name.first
+          else:
+            person.unqualified_name_flagging
+      if name_limit > 7:
+        too_many_names  
+  list_those_names
   
   nav.set_section('section_notice')
   set_progress(40)
   providing_notice
   hearing_date
-  if filing_location.county == "Cook":
-    cook_district
   set_progress(60)
   hearing_courtroom
   states_attorney_address.address
@@ -86,29 +102,92 @@ code: |
   e_signature
   
   nav.set_section('section_download')
+  filter_out_those_convictions
   a_little_more_logic
   court_house_address
   set_progress(100)
   get_docs_screen
 ---
 code: |
+  convictions[i].date
   if convictions[i].type == "other":
-    invalid_type_kickout
-  if convictions[i].same_case_check == True:
-    same_case_kickout
-  if convictions[i].probation_check == True:
+    convictions[i].invalid_type_dq
+
+  elif convictions[i].same_case_check == True:
+    convictions[i].same_case_dq
+
+  elif convictions[i].probation_check == True:
     if convictions[i].probation_complete == True:
-      probation_kickout
-  if convictions[i].sentence_check == True:
-    sentence_kickout
-  if convictions[i].conditions_check == False:
-    conditions_kickout
-    
-  convictions[i].case_number
-  convictions[i].arrest_date
-  if convictions[i].other_name_check == False:
-    convictions[i].alternate_name.name.first
+      convictions[i].probation_dq
+
+    elif convictions[i].sentence_check == True:
+      convictions[i].sentence_dq
+
+    elif convictions[i].conditions_check == False:
+      convictions[i].conditions_dq
+
+    else:  
+      convictions[i].conviction_eligible
+      convictions[i].case_number 
+      convictions[i].arrest_date
+
+  elif convictions[i].sentence_check == True:
+    convictions[i].sentence_dq
+
+  elif convictions[i].conditions_check == False:
+    convictions[i].conditions_dq
+
+  else:  
+    convictions[i].conviction_eligible
+    convictions[i].case_number 
+    convictions[i].arrest_date
+
+  convictions[i].qualified
   convictions[i].complete = True
+---
+sets:
+  - convictions[i].unqualified_name_flagging
+depends on:
+  - convictions[i].qualified
+code: |
+  if convictions[i].qualified == False:
+    convictions[i].other_name_check = True
+  convictions[i].unqualified_name_flagging = True
+---
+sets:
+  - convictions[i].qualified
+depends on:
+  - convictions[i].type
+  - convictions[i].same_case_check
+  - convictions[i].probation_check
+  - convictions[i].probation_complete
+  - convictions[i].sentence_check
+  - convictions[i].conditions_check
+code: |
+    if convictions[i].type == "other":
+      convictions[i].qualified = False
+    elif convictions[i].same_case_check == True:
+      convictions[i].qualified = False
+    elif convictions[i].probation_check == True:
+      if convictions[i].probation_complete == True:
+        convictions[i].qualified = False
+      elif convictions[i].sentence_check == True:
+        convictions[i].qualified = False
+      elif convictions[i].conditions_check == False:
+        convictions[i].qualified = False
+      else:
+        convictions[i].qualified = True
+    elif convictions[i].sentence_check == True:
+      convictions[i].qualified = False
+    elif convictions[i].conditions_check == False:
+      convictions[i].qualified = False
+    else:
+      convictions[i].qualified = True
+---
+reconsider: True
+code: |
+  qualified_convictions = [conviction for conviction in convictions if conviction.qualified == True]
+  filter_out_those_convictions = True
 ---
 id: welcome
 question: |
@@ -258,11 +337,7 @@ code: |
 ---
 id: offense type
 question: |
-  % if i == 0: 
-  What type of cannabis conviction is your offense?
-  % else:
-  What type of cannabis conviction is the ${ordinal(i)} offense?
-  % endif
+  What type of cannabis conviction is the ${convictions[i].date} conviction?
 subquestion: |
   ${collapse_template(finding_type)}
 field: convictions[i].type
@@ -282,17 +357,22 @@ content: |
   
   [FILE ClassAndType.png]
 ---
-id: invalid type kickout
-event: invalid_type_kickout
+id: invalid type disqualification
+continue button field: convictions[i].invalid_type_dq
 question: |
-  Sorry
+  The ${convictions[i].date} conviction is not eligible to be expunged.
 subquestion: |
   Only misdemeanor cannabis offenses and class 4 felony cannabis offenses are eligible to be expunged.
   
-  Click **Back** if you made a mistake. Or you can talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
-buttons:
-  - Exit: exit
-  - Restart: restart
+  You can talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
+  
+  % if i == 0:
+  Click **Back** if you made a mistake. Click **Next** if you would like to expunge a different conviction.
+  % elif i == 1:
+  Click **Back** if you made a mistake. Click **Next** if you would like to expunge another conviction or expunge the conviction you have already entered.
+  % else:
+  Click **Back** if you made a mistake. Click **Next** if you would like to expunge another conviction or expunge the convictions you have already entered.
+  % endif
 ---
 id: conviction date
 question: |
@@ -311,11 +391,7 @@ fields:
 ---
 id: same case multiple convictions check
 question: |
-  % if i == 0:
-  Were you convicted of any additional counts in the same case as your cannabis offense? 
-  % else:
-  Were you convicted of any additional counts in the same case as your ${ordinal(i)} cannabis offense?
-  % endif
+  Were you convicted of any additional counts in the same case as your ${convictions[i].date} conviction?
 subquestion: |
   If you were also convicted in the same case on a separate count (cannabis-related or otherwise) that is not eligible to be vacated, the court will not vacate and expungethe case.
 
@@ -324,49 +400,42 @@ fields:
   - no label: convictions[i].same_case_check
     datatype: yesnoradio
 ---
-id: same case multiple convictions kickout
-event: same_case_kickout
+id: same case multiple convictions disqualification
+continue button field: convictions[i].same_case_dq
 question: |
-  Sorry
+  The ${convictions[i].date} conviction is not eligible to be expunged.
 subquestion: |
-  Since you were convicted in the same case on a separate count that is not eligible to be vacated, the court will not vacate and expunge the case.
+  Since you were convicted in the same case on a separate count that is not eligible to be vacated, the court will not vacate and expunge this conviction.
   
-  However, it may be eligible for expungement or sealing using the [**regular criminal records expungement request**](https://www.illinoislegalaid.org/legal-information/criminal-record-expungement-or-sealing-request).
+  However, it may be eligible for expungement or sealing using the [**regular criminal records expungement request**](https://www.illinoislegalaid.org/legal-information/criminal-record-expungement-or-sealing-request).
   
-  Click **Back** if you made a mistake. Or you can talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
-buttons:
-  - Exit: exit
-  - Restart: restart
+  You can talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
+  
+  % if i == 0:
+  Click **Back** if you made a mistake. Click **Next** if you would like to expunge a different conviction.
+  % elif i == 1:
+  Click **Back** if you made a mistake. Click **Next** if you would like to expunge another conviction or expunge the conviction you have already entered.
+  % else:
+  Click **Back** if you made a mistake. Click **Next** if you would like to expunge another conviction or expunge the convictions you have already entered.
+  % endif
 ---
 id: any probation check
 question: |
-  % if i == 0:
-  Did you receive Court Supervision or Qualified Probation for your offense?
-  % else:
-  Did you receive Court Supervision or Qualified Probation for your ${ordinal(i)} offense?
-  % endif
+  Did you receive Court Supervision or Qualified Probation for your ${convictions[i].date} conviction?
 fields:
   - no label: convictions[i].probation_check
     datatype: yesnoradio
 ---
 id: probation complete check
 question: |
-  % if i == 0:
-  Did you successfully complete your Court Supervision or Qualified Probation?
-  % else:
-  Did you successfully complete your Court Supervision or Qualified Probation for your ${ordinal(i)} offense?
-  % endif
+  Did you successfully complete your Court Supervision or Qualified Probation for your ${convictions[i].date} conviction?
 fields:
   - no label: convictions[i].probation_complete
     datatype: yesnoradio
 ---
 id: sentence check
 question: |
-  % if i == 0:
-  Are you still serving your sentence?
-  % else:
-  Are you still serving the sentence for your ${ordinal(i)} offense?
-  % endif
+  Are you still serving the sentence for your ${convictions[i].date} conviction?
 fields:
   - no label: convictions[i].sentence_check
     datatype: yesnoradio
@@ -374,11 +443,7 @@ fields:
 #The wording of this question seems off? This is how it was phrased in A2J, but shouldn't it be "conditions of your release" or something similar?
 id: conditions check
 question: |
-  % if i == 0:
-  Have you completed all conditions of your offense?
-  % else:
-  Have you completed all conditions of your ${ordinal(i)} offense?
-  % endif
+  Have you completed all conditions of your ${convictions[i].date} conviction?
 subquestion: |
   Some sentences of probation or conditional discharge may require you to complete additional conditions before your sentence is discharged.
 
@@ -389,59 +454,70 @@ fields:
 ---
 #The following kickouts all occurr within the gather loop for the convictions. It seems like poor design to have the kickout event recur like that. Is there a way to add a button that just restarts the iteration?
 ---
-id: conditions kickout
-event: conditions_kickout
+id: conditions disqualification
+continue button field: convictions[i].conditions_dq
 question: |
-  Sorry
+  The ${convictions[i].date} conviction is not eligible to be expunged.
 subquestion: |
   A conviction cannot be expunged if you have not completed all conditions for it.
   
-  Click **Back** if you made a mistake. Or you can talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
-buttons:
-  - Exit: exit
-  - Restart: restart
+  You can talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
+  
+  % if i == 0:
+  Click **Back** if you made a mistake. Click **Next** if you would like to expunge a different conviction.
+  % elif i == 1:
+  Click **Back** if you made a mistake. Click **Next** if you would like to expunge another conviction or expunge the conviction you have already entered.
+  % else:
+  Click **Back** if you made a mistake. Click **Next** if you would like to expunge another conviction or expunge the convictions you have already entered.
+  % endif
 ---
-id: active sentence kickout
-event: sentence_kickout
+id: active sentence disqualfication
+continue button field: convictions[i].sentence_dq
 question: |
-  Sorry
+  The ${convictions[i].date} conviction is not eligible to be expunged.
 subquestion: |
   A conviction cannot be expunged if you are still serving your sentence for it.
   
-  Click **Back** if you made a mistake. Or you can talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
-buttons:
-  - Exit: exit
-  - Restart: restart
+  You can talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
+  
+  % if i == 0:
+  Click **Back** if you made a mistake. Click **Next** if you would like to expunge a different conviction.
+  % elif i == 1:
+  Click **Back** if you made a mistake. Click **Next** if you would like to expunge another conviction or expunge the conviction you have already entered.
+  % else:
+  Click **Back** if you made a mistake. Click **Next** if you would like to expunge another conviction or expunge the convictions you have already entered.
+  % endif
 ---
 id: probation kickout
-event: probation_kickout
+continue button field: convictions[i].probation_dq
 question: |
-  Sorry
+  The ${convictions[i].date} conviction is not eligible to be expunged.
 subquestion: |
-  If you successfully completed your Court Supervision or Qualified probation, the conviction is not eligible for a motion to vacate and expunge. However, it is eligible for expungement using the regular [**criminal records expungement request**](https://www.illinoislegalaid.org/legal-information/criminal-record-expungement-or-sealing-request).
+  If you successfully completed your Court Supervision or Qualified probation, the conviction is not eligible for a motion to vacate and expunge. However, it is eligible for expungement using the regular [**criminal records expungement request**](https://www.illinoislegalaid.org/legal-information/criminal-record-expungement-or-sealing-request).
   
-  Click **Back** if you made a mistake. Or you can talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
-buttons:
-  - Exit: exit
-  - Restart: restart
+  You can talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
+  
+  % if i == 0:
+  Click **Back** if you made a mistake. Click **Next** if you would like to expunge a different conviction.
+  % elif i == 1:
+  Click **Back** if you made a mistake. Click **Next** if you would like to expunge another conviction or expunge the conviction you have already entered.
+  % else:
+  Click **Back** if you made a mistake. Click **Next** if you would like to expunge another conviction or expunge the convictions you have already entered.
+  % endif
 ---
 id: conviction eligibile
-continue button field: conviction_eligible
+continue button field: convictions[i].conviction_eligible
 question: |
   Good news
 subquestion: |
-  This conviction is eligible to be expunged using this form.
+  The ${convictions[i].date} conviction is eligible to be expunged using this form.
 
   **Note:** even though this conviction is eligible to be expunged, it is still up to the judge to decide if it will be.
 ---
 #Where does the municipal case number get used in the LHI verison?
 id: conviction case number
 question: |
-  % if i == 0:
-  What is the court case number of your conviction?
-  % else:
-  What is the court case number of your ${ordinal(i)} conviction?
-  % endif
+  What is the court case number of your ${convictions[i].date} conviction?
 subquestion: |
   If there is a municipal case number, you should enter that as well.
   
@@ -465,11 +541,7 @@ content: |
 ---
 id: arrest info
 question: |
-  % if i == 0:
-  When were you arrested for your offense, and what is the name of the agency that arrested you?
-  % else:
-  When were you arrested for your ${ordinal(i)} offense, and what is the name of the agency that arrested you?
-  % endif
+  When were you arrested for the offense from the ${convictions[i].date} conviction, and what is the name of the agency that arrested you?
 subquestion: |
   ${collapse_template(find_agency)}
 fields:
@@ -487,13 +559,42 @@ content: |
   
   [FILE ArrestingAgency.png]
 ---
+id: user name
+question:  |
+  What is your name?
+subquestion: |
+  ${collapse_template(multiple_names_help)}
+fields:
+  - First name: users[0].name.first
+  - Middle name: users[0].name.middle
+    required: False
+  - Last name: users[0].name.last
+  - Suffix: users[0].name.suffix
+    code: |
+      name_suffix()
+    required: False  
+---
+template: multiple_names_help
+subject: |
+  **What if I was convicted under a name other than my current name?**
+content: |
+  For this question, you should enter your current legal name.
+  
+  You will have an opportunity to list other names you were convicted under later in this interview.
+---
+id: need a name list check
+question: |
+  Were you convicted under a name other than ${users[0].name.full(middle='full')} for any of your convictions?
+field: need_a_name_list_check
+choices:
+  - Yes, I was convicted under multiple names: True
+  - No, I was only convicted under the name ${users[0].name.full(middle='full')}: False
+---
+sets:
+  - convictions[i].other_name_check
 id: other name check
 question: |
-  % if i == 0:
-  Was your name listed as ${users[0].name.full(middle='full')} for this conviction?
-  % else:
-  Was your name listed as ${users[0].name.full(middle='full')} for the ${ordinal(i)} conviction?
-  % endif
+  Was your name listed as ${users[0].name.full(middle='full')} for your ${convictions[i].date} conviction?
 field: convictions[i].other_name_check
 choices:
   - Yes: True
@@ -501,11 +602,7 @@ choices:
 ---
 id: conviction name
 question: |
-  % if i == 0:
-  What name were you convicted under?
-  % else:
-  What name was used for you in the ${ordinal(i)} conviction?
-  % endif
+  What name was used for you in the ${convictions[i].date} conviction?
 fields:
   - First: convictions[i].alternate_name.name.first
   - Middle: convictions[i].alternate_name.name.middle
@@ -515,6 +612,17 @@ fields:
     code: |
       name_suffix()
     required: False
+---
+id: too many names
+continue button field: too_many_names
+question: |
+  About multiple names
+subquestion: |
+  The *Motion to Vacate and Expunge* has limited space for multiple names.
+  
+   So far, you have listed ${comma_and_list(alternate_names_list.complete_elements().full_names())}.
+  
+  If you have been convicted under more names than those you have already listed, you may need to create multiple motions or use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
 ---
 #This is a horrible way to get this object list to behave.
 code: |
@@ -569,17 +677,182 @@ id: cook county courthouse
 question: |
   Which Cook County courthouse will you file in?
 subquestion: |
-  You can file your forms in any Cook County location. 
+  You can file your forms in any Cook County location.
 
   The Daley Center and the George N. Leighton Criminal Court Building have the most experience with expunging cannabis convictions.
+  
+  ${collapse_template(cook_district_help)}
 field: cook_district
 choices:
   - First Municipal District, Daley Center, 50 W. Washington Street, Chicago: 15
+    help: |
+      The First Municipal District covers the **City of Chicago**. 
   - Second Municipal District, 5600 Old Orchard Road, Skokie: 16
+    help: |
+      The Second Municipal District covers the **northern suburbs of Cook County**. It includes:
+      
+      * Deerfield
+      * Des Plaines
+      * Evanston
+      * Glencoe
+      * Glenview
+      * Golf
+      * Kenilworth
+      * Lincolnwood
+      * Maine (not within Rosemont)
+      * Morton Grove
+      * New Trier
+      * Niles
+      * Northbrook
+      * Northfield (not within Prospect Heights)
+      * Park Ridge
+      * Skokie
+      * Wilmette
+      * Winnetka
+      * Wheeling (within Des Plaines)
   - Third Municipal District, 2121 Euclid Avenue, Rolling Meadows: 17
+    help: |
+      The Third Municipal District covers the **northwestern suburbs of Cook County**. It includes:
+
+      * Arlington Heights
+      * Barrington
+      * Barrington Hills
+      * Bartlett
+      * Bensenville
+      * Buffalo Grove
+      * East Dundee
+      * Elgin
+      * Elk Grove
+      * Elk Grove Village
+      * Hanover
+      * Hanover Park
+      * Harwood Heights
+      * Hoffman Estates
+      * Inverness
+      * Leyden (within Rosemont and Schiller Park)
+      * Maine (within Rosemont)
+      * Mount Prospect
+      * Norridge
+      * Northfield (within Prospect Heights)
+      * Norwood Park (not within Chicago)
+      * Palatine
+      * Prospect Heights
+      * Rolling Meadows
+      * Roselle
+      * Rosemont
+      * Schaumburg
+      * Schiller Park
+      * South Barrington
+      * Streamwood
+      * Wheeling (not within Des Plaines)    
   - Fourth Municipal District, 1500 Maybrook Drive, Maywood: 18
+    help: |
+      The Fourth Municipal District covers the **western suburbs of Cook County**. It includes:
+      
+      * Bellwood
+      * Berkeley
+      * Berwyn
+      * Broadview
+      * Brookfield
+      * Cicero
+      * Elmwood Park
+      * Forest Park
+      * Franklin Park
+      * Hillside
+      * La Grange Park
+      * Leyden (not within Rosemont and Schiller Park)
+      * Maywood
+      * Melrose Park
+      * Northlake
+      * North Riverside
+      * Oak Park
+      * Proviso
+      * River Forest
+      * River Grove
+      * Riverside
+      * Stone Park
+      * Westchester  
   - Fifth Municipal District, 10220 S. 76th Avenue, Bridgeview: 19
+    help: |
+      The Fifth Municipal District covers the **southwestern suburbs of Cook County**. It includes:
+      
+      * Alsip
+      * Bedford Park
+      * Bridgeview
+      * Burbank
+      * Burr Ridge
+      * Chicago Ridge
+      * Crestwood
+      * Countryside
+      * Evergreen Park
+      * Forest View
+      * Hickory Hills
+      * Hinsdale
+      * Hodgkins
+      * Hometown
+      * Indian Head Park
+      * Justice
+      * La Grange
+      * Lemont
+      * Lyons
+      * McCook
+      * Merrionette Park
+      * Oak Forest
+      * Oak Lawn
+      * Orland Hills
+      * Orland Park
+      * Palos
+      * Palos Heights
+      * Palos Hills
+      * Palos Park
+      * Stickney
+      * Summit
+      * Tinley Park
+      * Western Springs
+      * Willow Springs
+      * Woodridge
+      * Worth
   - Sixth Municipal District, 16501 South Kedzie Parkway, Markham: 20
+    help: |
+      The Sixth Municipal District covers the **southern suburbs of Cook County**. It includes:
+      
+      * Bloom
+      * Blue Island
+      * Bremen
+      * Burnham
+      * Calumet
+      * Calumet City
+      * Calumet Park
+      * Chicago Heights
+      * Country Club Hills
+      * Crete
+      * Dixmoor
+      * Dolton
+      * East Hazel Crest
+      * Flossmoor
+      * Ford Heights
+      * Glenwood
+      * Harvey
+      * Hazel Crest
+      * Homewood
+      * Lansing
+      * Lynwood
+      * Markham
+      * Matteson
+      * Midlothian
+      * Olympia Fields
+      * Park Forest
+      * Phoenix
+      * Posen
+      * Rich
+      * Richton Park
+      * Riverdale
+      * Robbins
+      * Sauk Village
+      * South Chicago Heights
+      * South Holland
+      * Steger
+      * Thornton  
   - George N. Leighton Criminal Court Building, 2600 S. California Avenue, Chicago: 22
 ---
  #  if cook_district == 15:
@@ -596,6 +869,12 @@ choices:
  #    court_house_address = "16501 South Kedzie Parkway, Markham, IL 60428"
  #  elif cook_district == 22:
  #    court_house_address = "George N. Leighton Criminal Court Building, 2600 S. California Avenue, Chicago, IL 60608"
+---
+template: cook_district_help
+subject: |
+  **What if I am not sure?**
+content: |  
+  Visit **[Illinois Court Help](https://www.ilcourthelp.gov/)**, or you can call or text (833) 411-1121 for assistance.
 ---
 #I think there is a better way to handle this.
 depends on:
@@ -769,13 +1048,12 @@ fields:
     show if: x.has_email_address      
   - Email address: users[0].email    
     datatype: email
-    required: False
     show if: 
       variable: users[0].has_email_address
       is: True
 validation code: |
   if (not showifdef('users[0].phone_number') and \
-      (not showifdef('x=users[0].email'))):
+      (users[0].has_email_address == False)):
     validation_error(word("You need to provide at least one contact method."), field="users[0].other_contact_method")
 ---
 template: contact_info_help
@@ -830,16 +1108,31 @@ terms:
 ---
 template: signature_help
 subject: |
-  **What does it mean to sign the Motion to Vacate and Expunge?**
+  **What does it mean to sign the *Motion to Vacate and Expunge*?**
 content: |  
-  DEVELOPER'S NOTE: Is 735 ILCS 5/1-109 the correct rule here?
+  By signing your *Motion to Vacate and Expunge*, you are certifying that:
   
-  By signing your *Motion to Vacate and Expungement*, you are certifying that:
-  
-  * Everything on the form is true and correct, and
-  * You understand that making a false statement on the form is perjury, which can result in criminal penalties.
-  
-  See the [**Code of Civil Procedure, 735 ILCS 5/1-109**](https://www.ilga.gov/legislation/ilcs/documents/073500050k1-109.htm), for more information.
+  * You read the document,
+  * You believe it to be true and correct, and
+  * You are not filing it for an improper purpose, such as to cause delay.
+
+  See **[Illinois Supreme Court Rule 137](https://www.illinoiscourts.gov/supreme-court-rules)** for more information.
+---
+reconsider: True
+code: |
+
+  alternate_names_list.clear()
+  if convictions.number_gathered() == 1:
+    if convictions[0].other_name_check == False:
+      alternate_names_list.append(convictions[0].alternate_name)
+  elif need_a_name_list_check == True:
+    nested_cap = 0
+    for person in convictions:
+      if nested_cap < 8:
+        if person.other_name_check == False:
+          alternate_names_list.append(person.alternate_name)
+          nested_cap += 1
+  list_those_names = True
 ---
 reconsider: True
 code: |
@@ -847,17 +1140,17 @@ code: |
   conviction_time_storage = date_difference(starting='1/1/1901', ending=today())
   any_misdemeanors = False
   any_felonies = False
-  alternate_names_list.clear()
+  #alternate_names_list.clear()
   
-  for person in convictions:
+  for person in qualified_convictions:
     temp_arrest_time_ref = date_difference(starting=users[0].birthdate, ending=person.arrest_date)
     if temp_arrest_time_ref.years > arrest_time_storage.years:
       arrest_time_storage = temp_arrest_time_ref
     temp_conviction_time_ref = date_difference(starting=person.date, ending=today())
     if temp_conviction_time_ref.years < conviction_time_storage.years:
       conviction_time_storage = temp_conviction_time_ref
-    if person.other_name_check == False:
-      alternate_names_list.append(person.alternate_name.name.full(middle='full'))
+    #if person.other_name_check == False:
+      #alternate_names_list.append(person.alternate_name.name.full(middle='full'))
     if person.type == "misdemeanor":
       any_misdemeanors = True
     elif person.type == "felony":
@@ -959,107 +1252,107 @@ attachment:
   fields:
       - "filing_county_without_county": ${filing_location.county}
       - "user_name": ${users[0].name.full(middle='full')}
-      - "additional_names": ${comma_and_list(alternate_names_list)}
+      - "additional_names": ${comma_and_list(alternate_names_list.complete_elements().full_names())}
       - "new_case_number": ${new_case_number if new_number_check == True else ""}
       - "user_birth": ${users[0].birthdate}
       - "user_race": ${users[0].other_race if users[0].race == "Other" else users[0].race}
       - "user_gender": ${users[0].other_gender if users[0].gender == "Other" else users[0].gender}
-      - "case_number_one": ${convictions[0].number_for_form}
-      - "case_number_two": ${convictions[1].number_for_form}
-      - "case_number_three": ${convictions[2].number_for_form}
-      - "case_number_four": ${convictions[3].number_for_form}
-      - "case_number_five": ${convictions[4].number_for_form}
-      - "case_number_six": ${convictions[5].number_for_form}
-      - "case_number_seven": ${convictions[6].number_for_form}
-      - "case_number_eight": ${convictions[7].number_for_form}
-      - "case_number_nine": ${convictions[8].number_for_form}
-      - "case_number_ten": ${convictions[9].number_for_form}
-      - "case_number_eleven": ${convictions[10].number_for_form}
-      - "case_number_twelve": ${convictions[11].number_for_form}
-      - "case_number_thirteen": ${convictions[12].number_for_form}
-      - "case_number_fourteen": ${convictions[13].number_for_form}
-      - "case_number_fifteen": ${convictions[14].number_for_form}
-      - "case_number_sixteen": ${convictions[15].number_for_form}
-      - "case_number_seventeen": ${convictions[16].number_for_form}
-      - "case_number_eighteen": ${convictions[17].number_for_form}
+      - "case_number_one": ${qualified_convictions[0].number_for_form}
+      - "case_number_two": ${qualified_convictions[1].number_for_form}
+      - "case_number_three": ${qualified_convictions[2].number_for_form}
+      - "case_number_four": ${qualified_convictions[3].number_for_form}
+      - "case_number_five": ${qualified_convictions[4].number_for_form}
+      - "case_number_six": ${qualified_convictions[5].number_for_form}
+      - "case_number_seven": ${qualified_convictions[6].number_for_form}
+      - "case_number_eight": ${qualified_convictions[7].number_for_form}
+      - "case_number_nine": ${qualified_convictions[8].number_for_form}
+      - "case_number_ten": ${qualified_convictions[9].number_for_form}
+      - "case_number_eleven": ${qualified_convictions[10].number_for_form}
+      - "case_number_twelve": ${qualified_convictions[11].number_for_form}
+      - "case_number_thirteen": ${qualified_convictions[12].number_for_form}
+      - "case_number_fourteen": ${qualified_convictions[13].number_for_form}
+      - "case_number_fifteen": ${qualified_convictions[14].number_for_form}
+      - "case_number_sixteen": ${qualified_convictions[15].number_for_form}
+      - "case_number_seventeen": ${qualified_convictions[16].number_for_form}
+      - "case_number_eighteen": ${qualified_convictions[17].number_for_form}
       - "any_misdemeanors": ${any_misdemeanors}
       - "any_felonies": ${any_felonies}
       - "before_june": ${True}
       - "completed_sentences": ${True}
       - "ask_to_expunge": ${True}
-      - "agency_one": ${convictions[0].agency}
-      - "agency_two": ${convictions[1].agency}
-      - "agency_three": ${convictions[2].agency}
-      - "agency_four": ${convictions[3].agency}
-      - "agency_five": ${convictions[4].agency}
-      - "agency_six": ${convictions[5].agency}
-      - "agency_seven": ${convictions[6].agency}
-      - "agency_eight": ${convictions[7].agency}
-      - "agency_nine": ${convictions[8].agency}
-      - "agency_ten": ${convictions[9].agency}
-      - "agency_eleven": ${convictions[10].agency}
-      - "agency_twelve": ${convictions[11].agency}
-      - "agency_thirteen": ${convictions[12].agency}
-      - "agency_fourteen": ${convictions[13].agency}
-      - "agency_fifteen": ${convictions[14].agency}
-      - "agency_sixteen": ${convictions[15].agency}
-      - "agency_seventeen": ${convictions[16].agency}
-      - "agency_eighteen": ${convictions[17].agency}
-      - "misdemeanor_one": ${True if convictions[0].type == "misdemeanor" else False}
-      - "misdemeanor_two": ${True if convictions[1].type == "misdemeanor" else False}
-      - "misdemeanor_three": ${True if convictions[2].type == "misdemeanor" else False}
-      - "misdemeanor_four": ${True if convictions[3].type == "misdemeanor" else False}
-      - "misdemeanor_five": ${True if convictions[4].type == "misdemeanor" else False}
-      - "misdemeanor_six": ${True if convictions[5].type == "misdemeanor" else False}
-      - "misdemeanor_seven": ${True if convictions[6].type == "misdemeanor" else False}
-      - "misdemeanor_eight": ${True if convictions[7].type == "misdemeanor" else False}
-      - "misdemeanor_nine": ${True if convictions[8].type == "misdemeanor" else False}
-      - "misdemeanor_ten": ${True if convictions[9].type == "misdemeanor" else False}
-      - "misdemeanor_eleven": ${True if convictions[10].type == "misdemeanor" else False}
-      - "misdemeanor_twelve": ${True if convictions[11].type == "misdemeanor" else False}
-      - "misdemeanor_thirteen": ${True if convictions[12].type == "misdemeanor" else False}
-      - "misdemeanor_fourteen": ${True if convictions[13].type == "misdemeanor" else False}     
-      - "misdemeanor_fifteen": ${True if convictions[14].type == "misdemeanor" else False}
-      - "misdemeanor_sixteen": ${True if convictions[15].type == "misdemeanor" else False}
-      - "misdemeanor_seventeen": ${True if convictions[16].type == "misdemeanor" else False}
-      - "misdemeanor_eighteen": ${True if convictions[17].type == "misdemeanor" else False}
-      - "felony_one": ${True if convictions[0].type == "felony" else False}
-      - "felony_two": ${True if convictions[1].type == "felony" else False}
-      - "felony_three": ${True if convictions[2].type == "felony" else False}
-      - "felony_four": ${True if convictions[3].type == "felony" else False}
-      - "felony_five": ${True if convictions[4].type == "felony" else False}
-      - "felony_six": ${True if convictions[5].type == "felony" else False}
-      - "felony_seven": ${True if convictions[6].type == "felony" else False}
-      - "felony_eight": ${True if convictions[7].type == "felony" else False}
-      - "felony_nine": ${True if convictions[8].type == "felony" else False}
-      - "felony_ten": ${True if convictions[9].type == "felony" else False}
-      - "felony_eleven": ${True if convictions[10].type == "felony" else False}
-      - "felony_twelve": ${True if convictions[11].type == "felony" else False}
-      - "felony_thirteen": ${True if convictions[12].type == "felony" else False}
-      - "felony_fourteen": ${True if convictions[13].type == "felony" else False}     
-      - "felony_fifteen": ${True if convictions[14].type == "felony" else False}
-      - "felony_sixteen": ${True if convictions[15].type == "felony" else False}
-      - "felony_seventeen": ${True if convictions[16].type == "felony" else False}
-      - "felony_eighteen": ${True if convictions[17].type == "felony" else False}
-      - "arrest_date_one": ${convictions[0].arrest_date}
-      - "arrest_date_two": ${convictions[1].arrest_date}
-      - "arrest_date_three": ${convictions[2].arrest_date}
-      - "arrest_date_four": ${convictions[3].arrest_date}
-      - "arrest_date_five": ${convictions[4].arrest_date}
-      - "arrest_date_six": ${convictions[5].arrest_date}
-      - "arrest_date_seven": ${convictions[6].arrest_date}
-      - "arrest_date_eight": ${convictions[7].arrest_date}
-      - "arrest_date_nine": ${convictions[8].arrest_date}
-      - "arrest_date_ten": ${convictions[9].arrest_date}
-      - "arrest_date_eleven": ${convictions[10].arrest_date}
-      - "arrest_date_twelve": ${convictions[11].arrest_date}
-      - "arrest_date_thirteen": ${convictions[12].arrest_date}
-      - "arrest_date_fourteen": ${convictions[13].arrest_date}
-      - "arrest_date_fifteen": ${convictions[14].arrest_date}
-      - "arrest_date_sixteen": ${convictions[15].arrest_date}
-      - "arrest_date_seventeen": ${convictions[16].arrest_date}
-      - "arrest_date_eighteen": ${convictions[17].arrest_date}
-      - "additional_convictions": ${True if convictions.number_gathered() > 18 else False}
+      - "agency_one": ${qualified_convictions[0].agency}
+      - "agency_two": ${qualified_convictions[1].agency}
+      - "agency_three": ${qualified_convictions[2].agency}
+      - "agency_four": ${qualified_convictions[3].agency}
+      - "agency_five": ${qualified_convictions[4].agency}
+      - "agency_six": ${qualified_convictions[5].agency}
+      - "agency_seven": ${qualified_convictions[6].agency}
+      - "agency_eight": ${qualified_convictions[7].agency}
+      - "agency_nine": ${qualified_convictions[8].agency}
+      - "agency_ten": ${qualified_convictions[9].agency}
+      - "agency_eleven": ${qualified_convictions[10].agency}
+      - "agency_twelve": ${qualified_convictions[11].agency}
+      - "agency_thirteen": ${qualified_convictions[12].agency}
+      - "agency_fourteen": ${qualified_convictions[13].agency}
+      - "agency_fifteen": ${qualified_convictions[14].agency}
+      - "agency_sixteen": ${qualified_convictions[15].agency}
+      - "agency_seventeen": ${qualified_convictions[16].agency}
+      - "agency_eighteen": ${qualified_convictions[17].agency}
+      - "misdemeanor_one": ${True if qualified_convictions[0].type == "misdemeanor" else False}
+      - "misdemeanor_two": ${True if qualified_convictions[1].type == "misdemeanor" else False}
+      - "misdemeanor_three": ${True if qualified_convictions[2].type == "misdemeanor" else False}
+      - "misdemeanor_four": ${True if qualified_convictions[3].type == "misdemeanor" else False}
+      - "misdemeanor_five": ${True if qualified_convictions[4].type == "misdemeanor" else False}
+      - "misdemeanor_six": ${True if qualified_convictions[5].type == "misdemeanor" else False}
+      - "misdemeanor_seven": ${True if qualified_convictions[6].type == "misdemeanor" else False}
+      - "misdemeanor_eight": ${True if qualified_convictions[7].type == "misdemeanor" else False}
+      - "misdemeanor_nine": ${True if qualified_convictions[8].type == "misdemeanor" else False}
+      - "misdemeanor_ten": ${True if qualified_convictions[9].type == "misdemeanor" else False}
+      - "misdemeanor_eleven": ${True if qualified_convictions[10].type == "misdemeanor" else False}
+      - "misdemeanor_twelve": ${True if qualified_convictions[11].type == "misdemeanor" else False}
+      - "misdemeanor_thirteen": ${True if qualified_convictions[12].type == "misdemeanor" else False}
+      - "misdemeanor_fourteen": ${True if qualified_convictions[13].type == "misdemeanor" else False}
+      - "misdemeanor_fifteen": ${True if qualified_convictions[14].type == "misdemeanor" else False}
+      - "misdemeanor_sixteen": ${True if qualified_convictions[15].type == "misdemeanor" else False}
+      - "misdemeanor_seventeen": ${True if qualified_convictions[16].type == "misdemeanor" else False}
+      - "misdemeanor_eighteen": ${True if qualified_convictions[17].type == "misdemeanor" else False}
+      - "felony_one": ${True if qualified_convictions[0].type == "felony" else False}
+      - "felony_two": ${True if qualified_convictions[1].type == "felony" else False}
+      - "felony_three": ${True if qualified_convictions[2].type == "felony" else False}
+      - "felony_four": ${True if qualified_convictions[3].type == "felony" else False}
+      - "felony_five": ${True if qualified_convictions[4].type == "felony" else False}
+      - "felony_six": ${True if qualified_convictions[5].type == "felony" else False}
+      - "felony_seven": ${True if qualified_convictions[6].type == "felony" else False}
+      - "felony_eight": ${True if qualified_convictions[7].type == "felony" else False}
+      - "felony_nine": ${True if qualified_convictions[8].type == "felony" else False}
+      - "felony_ten": ${True if qualified_convictions[9].type == "felony" else False}
+      - "felony_eleven": ${True if qualified_convictions[10].type == "felony" else False}
+      - "felony_twelve": ${True if qualified_convictions[11].type == "felony" else False}
+      - "felony_thirteen": ${True if qualified_convictions[12].type == "felony" else False}
+      - "felony_fourteen": ${True if qualified_convictions[13].type == "felony" else False}     
+      - "felony_fifteen": ${True if qualified_convictions[14].type == "felony" else False}
+      - "felony_sixteen": ${True if qualified_convictions[15].type == "felony" else False}
+      - "felony_seventeen": ${True if qualified_convictions[16].type == "felony" else False}
+      - "felony_eighteen": ${True if qualified_convictions[17].type == "felony" else False}
+      - "arrest_date_one": ${qualified_convictions[0].arrest_date}
+      - "arrest_date_two": ${qualified_convictions[1].arrest_date}
+      - "arrest_date_three": ${qualified_convictions[2].arrest_date}
+      - "arrest_date_four": ${qualified_convictions[3].arrest_date}
+      - "arrest_date_five": ${qualified_convictions[4].arrest_date}
+      - "arrest_date_six": ${qualified_convictions[5].arrest_date}
+      - "arrest_date_seven": ${qualified_convictions[6].arrest_date}
+      - "arrest_date_eight": ${qualified_convictions[7].arrest_date}
+      - "arrest_date_nine": ${qualified_convictions[8].arrest_date}
+      - "arrest_date_ten": ${qualified_convictions[9].arrest_date}
+      - "arrest_date_eleven": ${qualified_convictions[10].arrest_date}
+      - "arrest_date_twelve": ${qualified_convictions[11].arrest_date}
+      - "arrest_date_thirteen": ${qualified_convictions[12].arrest_date}
+      - "arrest_date_fourteen": ${qualified_convictions[13].arrest_date}
+      - "arrest_date_fifteen": ${qualified_convictions[14].arrest_date}
+      - "arrest_date_sixteen": ${qualified_convictions[15].arrest_date}
+      - "arrest_date_seventeen": ${qualified_convictions[16].arrest_date}
+      - "arrest_date_eighteen": ${qualified_convictions[17].arrest_date}
+      - "additional_convictions": ${True if qualified_convictions.number_gathered() > 18 else False}
       - "current_age": ${ users[0].age_in_years()}
       - "age_at_last_arrest": ${ int(arrest_time_storage.years)}
       - "years_since_conviction": ${int(conviction_time_storage.years) if int(conviction_time_storage.years) != 0 else ""}
@@ -1082,33 +1375,33 @@ attachment:
   fields:
       - "filing_county_without_county": ${filing_location.county}
       - "user_name": ${users[0].name.full(middle='full')}
-      - "additional_names": ${comma_and_list(alternate_names_list)}
+      - "additional_names": ${comma_and_list(alternate_names_list.complete_elements().full_names())}
       - "new_case_number": ${new_case_number if new_number_check == True else ""}
       - "user_birth": ${users[0].birthdate}
       - "user_race": ${users[0].other_race if users[0].race == "Other" else users[0].race}
       - "user_gender": ${users[0].other_gender if users[0].gender == "Other" else users[0].gender}
       - "states_attorney_address": ${states_attorney_address.on_one_line(bare=True)}
-      - "case_number_one": ${convictions[0].number_for_form}
-      - "case_number_two": ${convictions[1].number_for_form}
-      - "case_number_three": ${convictions[2].number_for_form}
-      - "case_number_four": ${convictions[3].number_for_form}
-      - "case_number_five": ${convictions[4].number_for_form}
-      - "case_number_six": ${convictions[5].number_for_form}
-      - "case_number_seven": ${convictions[6].number_for_form}
-      - "case_number_eight": ${convictions[7].number_for_form}
-      - "case_number_nine": ${convictions[8].number_for_form}
-      - "case_number_ten": ${convictions[9].number_for_form}
-      - "case_number_eleven": ${convictions[10].number_for_form}
-      - "case_number_twelve": ${convictions[11].number_for_form}
-      - "case_number_thirteen": ${convictions[12].number_for_form}
-      - "case_number_fourteen": ${convictions[13].number_for_form}
-      - "case_number_fifteen": ${convictions[14].number_for_form}
-      - "case_number_sixteen": ${convictions[15].number_for_form}
-      - "case_number_seventeen": ${convictions[16].number_for_form}
-      - "case_number_eighteen": ${convictions[17].number_for_form}
-      - "additional_convictions": ${True if convictions.number_gathered() > 18 else False}
-      - "hearing_date": ${hearing_date}
-      - "hearing_time": ${format_time(hearing_time, format='h:mm')}
+      - "case_number_one": ${qualified_convictions[0].number_for_form}
+      - "case_number_two": ${qualified_convictions[1].number_for_form}
+      - "case_number_three": ${qualified_convictions[2].number_for_form}
+      - "case_number_four": ${qualified_convictions[3].number_for_form}
+      - "case_number_five": ${qualified_convictions[4].number_for_form}
+      - "case_number_six": ${qualified_convictions[5].number_for_form}
+      - "case_number_seven": ${qualified_convictions[6].number_for_form}
+      - "case_number_eight": ${qualified_convictions[7].number_for_form}
+      - "case_number_nine": ${qualified_convictions[8].number_for_form}
+      - "case_number_ten": ${qualified_convictions[9].number_for_form}
+      - "case_number_eleven": ${qualified_convictions[10].number_for_form}
+      - "case_number_twelve": ${qualified_convictions[11].number_for_form}
+      - "case_number_thirteen": ${qualified_convictions[12].number_for_form}
+      - "case_number_fourteen": ${qualified_convictions[13].number_for_form}
+      - "case_number_fifteen": ${qualified_convictions[14].number_for_form}
+      - "case_number_sixteen": ${qualified_convictions[15].number_for_form}
+      - "case_number_seventeen": ${qualified_convictions[16].number_for_form}
+      - "case_number_eighteen": ${qualified_convictions[17].number_for_form}
+      - "additional_convictions": ${True if qualified_convictions.number_gathered() > 18 else False}
+      - "hearing_date": ${hearing_date if knows_hearing_date == True else ""}
+      - "hearing_time": ${format_time(hearing_time, format='h:mm') if knows_hearing_time == True else "" }
       - "hearing_am": ${True if format_time(hearing_time, format='a')=='AM' else False}
       - "hearing_pm": ${True if format_time(hearing_time, format='a')=='PM' else False}
       - "hearing_courtroom": ${ hearing_courtroom}
@@ -1129,29 +1422,29 @@ attachment:
   fields:
       - "filing_county_without_county": ${filing_location.county}
       - "user_name": ${users[0].name.full(middle='full')}
-      - "additional_names": ${comma_and_list(alternate_names_list)}
+      - "additional_names": ${comma_and_list(alternate_names_list.complete_elements().full_names())}
       - "new_case_number": ${new_case_number if new_number_check == True else ""}
       - "user_birth": ${users[0].birthdate}
       - "user_race": ${users[0].other_race if users[0].race == "Other" else users[0].race}
       - "user_gender": ${users[0].other_gender if users[0].gender == "Other" else users[0].gender}
-      - "case_number_one": ${convictions[0].number_for_form}
-      - "case_number_two": ${convictions[1].number_for_form}
-      - "case_number_three": ${convictions[2].number_for_form}
-      - "case_number_four": ${convictions[3].number_for_form}
-      - "case_number_five": ${convictions[4].number_for_form}
-      - "case_number_six": ${convictions[5].number_for_form}
-      - "case_number_seven": ${convictions[6].number_for_form}
-      - "case_number_eight": ${convictions[7].number_for_form}
-      - "case_number_nine": ${convictions[8].number_for_form}
-      - "case_number_ten": ${convictions[9].number_for_form}
-      - "case_number_eleven": ${convictions[10].number_for_form}
-      - "case_number_twelve": ${convictions[11].number_for_form}
-      - "case_number_thirteen": ${convictions[12].number_for_form}
-      - "case_number_fourteen": ${convictions[13].number_for_form}
-      - "case_number_fifteen": ${convictions[14].number_for_form}
-      - "case_number_sixteen": ${convictions[15].number_for_form}
-      - "case_number_seventeen": ${convictions[16].number_for_form}
-      - "case_number_eighteen": ${convictions[17].number_for_form}
+      - "case_number_one": ${qualified_convictions[0].number_for_form}
+      - "case_number_two": ${qualified_convictions[1].number_for_form}
+      - "case_number_three": ${qualified_convictions[2].number_for_form}
+      - "case_number_four": ${qualified_convictions[3].number_for_form}
+      - "case_number_five": ${qualified_convictions[4].number_for_form}
+      - "case_number_six": ${qualified_convictions[5].number_for_form}
+      - "case_number_seven": ${qualified_convictions[6].number_for_form}
+      - "case_number_eight": ${qualified_convictions[7].number_for_form}
+      - "case_number_nine": ${qualified_convictions[8].number_for_form}
+      - "case_number_ten": ${qualified_convictions[9].number_for_form}
+      - "case_number_eleven": ${qualified_convictions[10].number_for_form}
+      - "case_number_twelve": ${qualified_convictions[11].number_for_form}
+      - "case_number_thirteen": ${qualified_convictions[12].number_for_form}
+      - "case_number_fourteen": ${qualified_convictions[13].number_for_form}
+      - "case_number_fifteen": ${qualified_convictions[14].number_for_form}
+      - "case_number_sixteen": ${qualified_convictions[15].number_for_form}
+      - "case_number_seventeen": ${qualified_convictions[16].number_for_form}
+      - "case_number_eighteen": ${qualified_convictions[17].number_for_form}
 ---
 attachment:
   variable name: additional_convictions[i]
@@ -1163,102 +1456,102 @@ attachment:
   fields:
       - "filing_county_without_county": ${filing_location.county}
       - "user_name": ${users[0].name.full(middle='full')}
-      - "additional_names": ${comma_and_list(alternate_names_list)}
+      - "additional_names": ${comma_and_list(alternate_names_list.complete_elements().full_names())}
       - "new_case_number": ${new_case_number if new_number_check == True else ""}
       - "user_birth": ${users[0].birthdate}
       - "user_race": ${users[0].other_race if users[0].race == "Other" else users[0].race}
       - "user_gender": ${users[0].other_gender if users[0].gender == "Other" else users[0].gender}
-      - "case_number_nineteen": ${convictions[18].number_for_form}
-      - "case_number_twenty": ${convictions[19].number_for_form}
-      - "case_number_twentyone": ${convictions[20].number_for_form}
-      - "case_number_twentytwo": ${convictions[21].number_for_form}
-      - "case_number_twentythree": ${convictions[22].number_for_form}
-      - "case_number_twentyfour": ${convictions[23].number_for_form}
-      - "case_number_twentyfive": ${convictions[24].number_for_form}
-      - "case_number_twentysix": ${convictions[25].number_for_form}
-      - "case_number_twentyseven": ${convictions[26].number_for_form}
-      - "case_number_twentyeight": ${convictions[27].number_for_form}
-      - "case_number_twentynine": ${convictions[28].number_for_form}
-      - "case_number_thirty": ${convictions[29].number_for_form}
-      - "case_number_thirtyone": ${convictions[30].number_for_form}
-      - "case_number_thirtytwo": ${convictions[31].number_for_form}
-      - "case_number_thirtythree": ${convictions[32].number_for_form}
-      - "case_number_thirtyfour": ${convictions[33].number_for_form}
-      - "case_number_thirtyfive": ${convictions[34].number_for_form}
-      - "case_number_thirtysix": ${convictions[35].number_for_form}
+      - "case_number_nineteen": ${qualified_convictions[18].number_for_form}
+      - "case_number_twenty": ${qualified_convictions[19].number_for_form}
+      - "case_number_twentyone": ${qualified_convictions[20].number_for_form}
+      - "case_number_twentytwo": ${qualified_convictions[21].number_for_form}
+      - "case_number_twentythree": ${qualified_convictions[22].number_for_form}
+      - "case_number_twentyfour": ${qualified_convictions[23].number_for_form}
+      - "case_number_twentyfive": ${qualified_convictions[24].number_for_form}
+      - "case_number_twentysix": ${qualified_convictions[25].number_for_form}
+      - "case_number_twentyseven": ${qualified_convictions[26].number_for_form}
+      - "case_number_twentyeight": ${qualified_convictions[27].number_for_form}
+      - "case_number_twentynine": ${qualified_convictions[28].number_for_form}
+      - "case_number_thirty": ${qualified_convictions[29].number_for_form}
+      - "case_number_thirtyone": ${qualified_convictions[30].number_for_form}
+      - "case_number_thirtytwo": ${qualified_convictions[31].number_for_form}
+      - "case_number_thirtythree": ${qualified_convictions[32].number_for_form}
+      - "case_number_thirtyfour": ${qualified_convictions[33].number_for_form}
+      - "case_number_thirtyfive": ${qualified_convictions[34].number_for_form}
+      - "case_number_thirtysix": ${qualified_convictions[35].number_for_form}
       - "ask_to_vacate": ${True}
-      - "agency_nineteen": ${convictions[18].agency}
-      - "agency_twenty": ${convictions[19].agency}
-      - "agency_twentyone": ${convictions[20].agency}
-      - "agency_twentytwo": ${convictions[21].agency}
-      - "agency_twentythree": ${convictions[22].agency}
-      - "agency_twentyfour": ${convictions[23].agency}
-      - "agency_twentyfive": ${convictions[24].agency}
-      - "agency_twentysix": ${convictions[25].agency}
-      - "agency_twentyseven": ${convictions[26].agency}
-      - "agency_twentyeight": ${convictions[27].agency}
-      - "agency_twentynine": ${convictions[28].agency}
-      - "agency_thirty": ${convictions[29].agency}
-      - "agency_thirtyone": ${convictions[30].agency}
-      - "agency_thirtytwo": ${convictions[31].agency}
-      - "agency_thirtythree": ${convictions[32].agency}
-      - "agency_thirtyfour": ${convictions[33].agency}
-      - "agency_thirtyfive": ${convictions[34].agency}
-      - "agency_thirtysix": ${convictions[35].agency}
-      - "misdemeanor_nineteen": ${True if convictions[18].type == "misdemeanor" else False}
-      - "misdemeanor_twenty": ${True if convictions[19].type == "misdemeanor" else False}
-      - "misdemeanor_twentyone": ${True if convictions[20].type == "misdemeanor" else False}
-      - "misdemeanor_twentytwo": ${True if convictions[21].type == "misdemeanor" else False}
-      - "misdemeanor_twentythree": ${True if convictions[22].type == "misdemeanor" else False}
-      - "misdemeanor_twentyfour": ${True if convictions[23].type == "misdemeanor" else False}
-      - "misdemeanor_twentyfive": ${True if convictions[24].type == "misdemeanor" else False}
-      - "misdemeanor_twentysix": ${True if convictions[25].type == "misdemeanor" else False}
-      - "misdemeanor_twentyseven": ${True if convictions[26].type == "misdemeanor" else False}
-      - "misdemeanor_twentyeight": ${True if convictions[27].type == "misdemeanor" else False}
-      - "misdemeanor_twentynine": ${True if convictions[28].type == "misdemeanor" else False}
-      - "misdemeanor_thirty": ${True if convictions[29].type == "misdemeanor" else False}
-      - "misdemeanor_thirtyone": ${True if convictions[30].type == "misdemeanor" else False}
-      - "misdemeanor_thirtytwo": ${True if convictions[31].type == "misdemeanor" else False}     
-      - "misdemeanor_thirtythree": ${True if convictions[32].type == "misdemeanor" else False}
-      - "misdemeanor_thirtyfour": ${True if convictions[33].type == "misdemeanor" else False}
-      - "misdemeanor_thirtyfive": ${True if convictions[34].type == "misdemeanor" else False}
-      - "misdemeanor_thirtysix": ${True if convictions[35].type == "misdemeanor" else False}
-      - "felony_nineteen": ${True if convictions[18].type == "felony" else False}
-      - "felony_twenty": ${True if convictions[19].type == "felony" else False}
-      - "felony_twentyone": ${True if convictions[20].type == "felony" else False}
-      - "felony_twentytwo": ${True if convictions[21].type == "felony" else False}
-      - "felony_twentythree": ${True if convictions[22].type == "felony" else False}
-      - "felony_twentyfour": ${True if convictions[23].type == "felony" else False}
-      - "felony_twentyfive": ${True if convictions[24].type == "felony" else False}
-      - "felony_twentysix": ${True if convictions[25].type == "felony" else False}
-      - "felony_twentyseven": ${True if convictions[26].type == "felony" else False}
-      - "felony_twentyeight": ${True if convictions[27].type == "felony" else False}
-      - "felony_twentynine": ${True if convictions[28].type == "felony" else False}
-      - "felony_thirty": ${True if convictions[29].type == "felony" else False}
-      - "felony_thirtyone": ${True if convictions[30].type == "felony" else False}
-      - "felony_thirtytwo": ${True if convictions[31].type == "felony" else False}     
-      - "felony_thirtythree": ${True if convictions[32].type == "felony" else False}
-      - "felony_thirtyfour": ${True if convictions[33].type == "felony" else False}
-      - "felony_thirtyfive": ${True if convictions[34].type == "felony" else False}
-      - "felony_thirtysix": ${True if convictions[35].type == "felony" else False}
-      - "arrest_date_nineteen": ${convictions[18].arrest_date}
-      - "arrest_date_twenty": ${convictions[19].arrest_date}
-      - "arrest_date_twentyone": ${convictions[20].arrest_date}
-      - "arrest_date_twentytwo": ${convictions[21].arrest_date}
-      - "arrest_date_twentythree": ${convictions[22].arrest_date}
-      - "arrest_date_twentyfour": ${convictions[23].arrest_date}
-      - "arrest_date_twentyfive": ${convictions[24].arrest_date}
-      - "arrest_date_twentysix": ${convictions[25].arrest_date}
-      - "arrest_date_twentyseven": ${convictions[26].arrest_date}
-      - "arrest_date_twentyeight": ${convictions[27].arrest_date}
-      - "arrest_date_twentynine": ${convictions[28].arrest_date}
-      - "arrest_date_thirty": ${convictions[29].arrest_date}
-      - "arrest_date_thirtyone": ${convictions[30].arrest_date}
-      - "arrest_date_thirtytwo": ${convictions[31].arrest_date}
-      - "arrest_date_thirtythree": ${convictions[32].arrest_date}
-      - "arrest_date_thirtyfour": ${convictions[33].arrest_date}
-      - "arrest_date_thirtyfive": ${convictions[34].arrest_date}
-      - "arrest_date_thirtysix": ${convictions[35].arrest_date}
+      - "agency_nineteen": ${qualified_convictions[18].agency}
+      - "agency_twenty": ${qualified_convictions[19].agency}
+      - "agency_twentyone": ${qualified_convictions[20].agency}
+      - "agency_twentytwo": ${qualified_convictions[21].agency}
+      - "agency_twentythree": ${qualified_convictions[22].agency}
+      - "agency_twentyfour": ${qualified_convictions[23].agency}
+      - "agency_twentyfive": ${qualified_convictions[24].agency}
+      - "agency_twentysix": ${qualified_convictions[25].agency}
+      - "agency_twentyseven": ${qualified_convictions[26].agency}
+      - "agency_twentyeight": ${qualified_convictions[27].agency}
+      - "agency_twentynine": ${qualified_convictions[28].agency}
+      - "agency_thirty": ${qualified_convictions[29].agency}
+      - "agency_thirtyone": ${qualified_convictions[30].agency}
+      - "agency_thirtytwo": ${qualified_convictions[31].agency}
+      - "agency_thirtythree": ${qualified_convictions[32].agency}
+      - "agency_thirtyfour": ${qualified_convictions[33].agency}
+      - "agency_thirtyfive": ${qualified_convictions[34].agency}
+      - "agency_thirtysix": ${qualified_convictions[35].agency}
+      - "misdemeanor_nineteen": ${True if qualified_convictions[18].type == "misdemeanor" else False}
+      - "misdemeanor_twenty": ${True if qualified_convictions[19].type == "misdemeanor" else False}
+      - "misdemeanor_twentyone": ${True if qualified_convictions[20].type == "misdemeanor" else False}
+      - "misdemeanor_twentytwo": ${True if qualified_convictions[21].type == "misdemeanor" else False}
+      - "misdemeanor_twentythree": ${True if qualified_convictions[22].type == "misdemeanor" else False}
+      - "misdemeanor_twentyfour": ${True if qualified_convictions[23].type == "misdemeanor" else False}
+      - "misdemeanor_twentyfive": ${True if qualified_convictions[24].type == "misdemeanor" else False}
+      - "misdemeanor_twentysix": ${True if qualified_convictions[25].type == "misdemeanor" else False}
+      - "misdemeanor_twentyseven": ${True if qualified_convictions[26].type == "misdemeanor" else False}
+      - "misdemeanor_twentyeight": ${True if qualified_convictions[27].type == "misdemeanor" else False}
+      - "misdemeanor_twentynine": ${True if qualified_convictions[28].type == "misdemeanor" else False}
+      - "misdemeanor_thirty": ${True if qualified_convictions[29].type == "misdemeanor" else False}
+      - "misdemeanor_thirtyone": ${True if qualified_convictions[30].type == "misdemeanor" else False}
+      - "misdemeanor_thirtytwo": ${True if qualified_convictions[31].type == "misdemeanor" else False}     
+      - "misdemeanor_thirtythree": ${True if qualified_convictions[32].type == "misdemeanor" else False}
+      - "misdemeanor_thirtyfour": ${True if qualified_convictions[33].type == "misdemeanor" else False}
+      - "misdemeanor_thirtyfive": ${True if qualified_convictions[34].type == "misdemeanor" else False}
+      - "misdemeanor_thirtysix": ${True if qualified_convictions[35].type == "misdemeanor" else False}
+      - "felony_nineteen": ${True if qualified_convictions[18].type == "felony" else False}
+      - "felony_twenty": ${True if qualified_convictions[19].type == "felony" else False}
+      - "felony_twentyone": ${True if qualified_convictions[20].type == "felony" else False}
+      - "felony_twentytwo": ${True if qualified_convictions[21].type == "felony" else False}
+      - "felony_twentythree": ${True if qualified_convictions[22].type == "felony" else False}
+      - "felony_twentyfour": ${True if qualified_convictions[23].type == "felony" else False}
+      - "felony_twentyfive": ${True if qualified_convictions[24].type == "felony" else False}
+      - "felony_twentysix": ${True if qualified_convictions[25].type == "felony" else False}
+      - "felony_twentyseven": ${True if qualified_convictions[26].type == "felony" else False}
+      - "felony_twentyeight": ${True if qualified_convictions[27].type == "felony" else False}
+      - "felony_twentynine": ${True if qualified_convictions[28].type == "felony" else False}
+      - "felony_thirty": ${True if qualified_convictions[29].type == "felony" else False}
+      - "felony_thirtyone": ${True if qualified_convictions[30].type == "felony" else False}
+      - "felony_thirtytwo": ${True if qualified_convictions[31].type == "felony" else False}     
+      - "felony_thirtythree": ${True if qualified_convictions[32].type == "felony" else False}
+      - "felony_thirtyfour": ${True if qualified_convictions[33].type == "felony" else False}
+      - "felony_thirtyfive": ${True if qualified_convictions[34].type == "felony" else False}
+      - "felony_thirtysix": ${True if qualified_convictions[35].type == "felony" else False}
+      - "arrest_date_nineteen": ${qualified_convictions[18].arrest_date}
+      - "arrest_date_twenty": ${qualified_convictions[19].arrest_date}
+      - "arrest_date_twentyone": ${qualified_convictions[20].arrest_date}
+      - "arrest_date_twentytwo": ${qualified_convictions[21].arrest_date}
+      - "arrest_date_twentythree": ${qualified_convictions[22].arrest_date}
+      - "arrest_date_twentyfour": ${qualified_convictions[23].arrest_date}
+      - "arrest_date_twentyfive": ${qualified_convictions[24].arrest_date}
+      - "arrest_date_twentysix": ${qualified_convictions[25].arrest_date}
+      - "arrest_date_twentyseven": ${qualified_convictions[26].arrest_date}
+      - "arrest_date_twentyeight": ${qualified_convictions[27].arrest_date}
+      - "arrest_date_twentynine": ${qualified_convictions[28].arrest_date}
+      - "arrest_date_thirty": ${qualified_convictions[29].arrest_date}
+      - "arrest_date_thirtyone": ${qualified_convictions[30].arrest_date}
+      - "arrest_date_thirtytwo": ${qualified_convictions[31].arrest_date}
+      - "arrest_date_thirtythree": ${qualified_convictions[32].arrest_date}
+      - "arrest_date_thirtyfour": ${qualified_convictions[33].arrest_date}
+      - "arrest_date_thirtyfive": ${qualified_convictions[34].arrest_date}
+      - "arrest_date_thirtysix": ${qualified_convictions[35].arrest_date}
       - "e_signature": ${ users[0].name.full(middle='full') if e_signature == True else ""}
       - "user_street": ${ users[0].address.line_one(bare=True)}
       - "user_csz": ${users[0].address.line_two()}
@@ -1275,29 +1568,29 @@ attachment:
   fields:
       - "filing_county_without_county": ${filing_location.county}
       - "user_name": ${users[0].name.full(middle='full')}
-      - "additional_names": ${comma_and_list(alternate_names_list)}
+      - "additional_names": ${comma_and_list(alternate_names_list.complete_elements().full_names())}
       - "new_case_number": ${new_case_number if new_number_check == True else ""}
       - "user_birth": ${users[0].birthdate}
       - "user_race": ${users[0].other_race if users[0].race == "Other" else users[0].race}
       - "user_gender": ${users[0].other_gender if users[0].gender == "Other" else users[0].gender}
-      - "case_number_nineteen": ${convictions[18].number_for_form}
-      - "case_number_twenty": ${convictions[19].number_for_form}
-      - "case_number_twentyone": ${convictions[20].number_for_form}
-      - "case_number_twentytwo": ${convictions[21].number_for_form}
-      - "case_number_twentythree": ${convictions[22].number_for_form}
-      - "case_number_twentyfour": ${convictions[23].number_for_form}
-      - "case_number_twentyfive": ${convictions[24].number_for_form}
-      - "case_number_twentysix": ${convictions[25].number_for_form}
-      - "case_number_twentyseven": ${convictions[26].number_for_form}
-      - "case_number_twentyeight": ${convictions[27].number_for_form}
-      - "case_number_twentynine": ${convictions[28].number_for_form}
-      - "case_number_thirty": ${convictions[29].number_for_form}
-      - "case_number_thirtyone": ${convictions[30].number_for_form}
-      - "case_number_thirtytwo": ${convictions[31].number_for_form}
-      - "case_number_thirtythree": ${convictions[32].number_for_form}
-      - "case_number_thirtyfour": ${convictions[33].number_for_form}
-      - "case_number_thirtyfive": ${convictions[34].number_for_form}
-      - "case_number_thirtysix": ${convictions[35].number_for_form}
+      - "case_number_nineteen": ${qualified_convictions[18].number_for_form}
+      - "case_number_twenty": ${qualified_convictions[19].number_for_form}
+      - "case_number_twentyone": ${qualified_convictions[20].number_for_form}
+      - "case_number_twentytwo": ${qualified_convictions[21].number_for_form}
+      - "case_number_twentythree": ${qualified_convictions[22].number_for_form}
+      - "case_number_twentyfour": ${qualified_convictions[23].number_for_form}
+      - "case_number_twentyfive": ${qualified_convictions[24].number_for_form}
+      - "case_number_twentysix": ${qualified_convictions[25].number_for_form}
+      - "case_number_twentyseven": ${qualified_convictions[26].number_for_form}
+      - "case_number_twentyeight": ${qualified_convictions[27].number_for_form}
+      - "case_number_twentynine": ${qualified_convictions[28].number_for_form}
+      - "case_number_thirty": ${qualified_convictions[29].number_for_form}
+      - "case_number_thirtyone": ${qualified_convictions[30].number_for_form}
+      - "case_number_thirtytwo": ${qualified_convictions[31].number_for_form}
+      - "case_number_thirtythree": ${qualified_convictions[32].number_for_form}
+      - "case_number_thirtyfour": ${qualified_convictions[33].number_for_form}
+      - "case_number_thirtyfive": ${qualified_convictions[34].number_for_form}
+      - "case_number_thirtysix": ${qualified_convictions[35].number_for_form}
 ---
 attachment:
   variable name: additional_order[i]
@@ -1309,29 +1602,29 @@ attachment:
   fields:
       - "filing_county_without_county": ${filing_location.county}
       - "user_name": ${users[0].name.full(middle='full')}
-      - "additional_names": ${comma_and_list(alternate_names_list)}
+      - "additional_names": ${comma_and_list(alternate_names_list.complete_elements().full_names())}
       - "new_case_number": ${new_case_number if new_number_check == True else ""}
       - "user_birth": ${users[0].birthdate}
       - "user_race": ${users[0].other_race if users[0].race == "Other" else users[0].race}
       - "user_gender": ${users[0].other_gender if users[0].gender == "Other" else users[0].gender}
-      - "case_number_one": ${convictions[18].number_for_form}
-      - "case_number_two": ${convictions[19].number_for_form}
-      - "case_number_three": ${convictions[20].number_for_form}
-      - "case_number_four": ${convictions[21].number_for_form}
-      - "case_number_five": ${convictions[22].number_for_form}
-      - "case_number_six": ${convictions[23].number_for_form}
-      - "case_number_seven": ${convictions[24].number_for_form}
-      - "case_number_eight": ${convictions[25].number_for_form}
-      - "case_number_nine": ${convictions[26].number_for_form}
-      - "case_number_ten": ${convictions[27].number_for_form}
-      - "case_number_eleven": ${convictions[28].number_for_form}
-      - "case_number_twelve": ${convictions[29].number_for_form}
-      - "case_number_thirteen": ${convictions[30].number_for_form}
-      - "case_number_fourteen": ${convictions[31].number_for_form}
-      - "case_number_fifteen": ${convictions[32].number_for_form}
-      - "case_number_sixteen": ${convictions[33].number_for_form}
-      - "case_number_seventeen": ${convictions[34].number_for_form}
-      - "case_number_eighteen": ${convictions[35].number_for_form}
+      - "case_number_one": ${qualified_convictions[18].number_for_form}
+      - "case_number_two": ${qualified_convictions[19].number_for_form}
+      - "case_number_three": ${qualified_convictions[20].number_for_form}
+      - "case_number_four": ${qualified_convictions[21].number_for_form}
+      - "case_number_five": ${qualified_convictions[22].number_for_form}
+      - "case_number_six": ${qualified_convictions[23].number_for_form}
+      - "case_number_seven": ${qualified_convictions[24].number_for_form}
+      - "case_number_eight": ${qualified_convictions[25].number_for_form}
+      - "case_number_nine": ${qualified_convictions[26].number_for_form}
+      - "case_number_ten": ${qualified_convictions[27].number_for_form}
+      - "case_number_eleven": ${qualified_convictions[28].number_for_form}
+      - "case_number_twelve": ${qualified_convictions[29].number_for_form}
+      - "case_number_thirteen": ${qualified_convictions[30].number_for_form}
+      - "case_number_fourteen": ${qualified_convictions[31].number_for_form}
+      - "case_number_fifteen": ${qualified_convictions[32].number_for_form}
+      - "case_number_sixteen": ${qualified_convictions[33].number_for_form}
+      - "case_number_seventeen": ${qualified_convictions[34].number_for_form}
+      - "case_number_eighteen": ${qualified_convictions[35].number_for_form}
 ---
 id: review screen
 event: review_answers
@@ -1355,6 +1648,11 @@ review:
       % for my_var in convictions:
         * Conviction date: ${ my_var.date }
       % endfor
+  - Edit: need_a_name_list_check
+    button: |
+      **Were you convicted under multiple names?**
+      ${word(yesno(need_a_name_list_check))}
+    show if: convictions.number_gathered() > 1
   - Edit: hearing_date
     button: |
       **When is your court hearing?**
@@ -1470,6 +1768,8 @@ rows: convictions
 columns:
   - Conviction date: |
       row_item.date if defined("row_item.date") else ""
+  - Eligible for expungement?: |
+     word(yesno(row_item.qualified)) if defined("row_item.qualified") else ""
   - Arrest date, arresting agency, and type of conviction: |
       action_button_html(url_action(row_item.attr_name("review_conviction")), label="Edit", icon="pencil-alt")
 delete buttons: True
@@ -1481,6 +1781,10 @@ generic object: ALIndividual
 question: |
   Edit information about the ${x.date} conviction
 review: 
+  - Edit: x.date
+    button: |
+      **Date of conviction:**
+      ${x.date}
   - Edit: x.type
     button: |
       **Type of offense:**
@@ -1491,14 +1795,11 @@ review:
       % else:
       Other
       % endif
-  - Edit: x.date
-    button: |
-      **Date of conviction:**
-      ${x.date}
   - Edit: x.case_number 
     button: |
       **Court case number:**
       ${x.case_number}
+    show if: x.qualified
   - Edit: x.municipal_number
     button: |
       **Municipal case number:**
@@ -1507,27 +1808,47 @@ review:
       % else:
       None
       % endif
-  - Edit: x.probation_check
-    button: |
-      **Did you receive Court Supervision or Qualified Probation?**
-      ${word(yesno(x.probation_check))}
+    show if: x.qualified
   - Edit: x.arrest_date
     button: |
       **Arrest date:**
       ${x.arrest_date}
+    show if: x.qualified
   - Edit: x.agency
     button: |
       **Arresting agency:**
       ${x.agency}
+    show if: x.qualified
   - Edit: x.other_name_check
     button: |
       **Was your name listed as ${users[0].name.full(middle='full')} for this conviction?**
       ${word(yesno(x.other_name_check))}
+    show if: x.qualified
   - Edit: x.alternate_name.name.first
     button: |
       **What name were you convicted under?**
       ${x.alternate_name.name.full(middle='full')}
-    show if: x.other_name_check
+    show if: x.other_name_check == False and x.qualified == True
+  - Edit: x.same_case_check
+    button: |
+      **Were you convicted of any additional counts in the same case?**
+  - Edit: x.probation_check
+    button: |
+      **Did you receive Court Supervision or Qualified Probation?**
+      ${word(yesno(x.probation_check))}
+  - Edit: x.probation_complete
+    button: |
+      **Did you complete your Probation?**
+      ${word(yesno(x.probation_complete))}
+    show if: x.probation_check
+  - Edit: x.sentence_check
+    button: |
+      **Are you still serving your sentence?**
+      ${word(yesno(x.sentence_check))}
+  - Edit: x.conditions_check
+    button: |
+      **Have you completed all conditions of your offense?**
+      ${word(yesno(x.conditions_check))}
 ---
 id: convictions review
 continue button field: convictions.revisit
@@ -1565,6 +1886,11 @@ review:
       % for my_var in convictions:
         * Conviction date: ${ my_var.date }
       % endfor
+  - Edit: need_a_name_list_check
+    button: |
+      **Were you convicted under multiple names?**
+      ${word(yesno(need_a_name_list_check))}
+    show if: convictions.number_gathered() > 1
   - Edit: missed_opportunities
     button: |
       **What opportunities have you missed because of your convictions?**
