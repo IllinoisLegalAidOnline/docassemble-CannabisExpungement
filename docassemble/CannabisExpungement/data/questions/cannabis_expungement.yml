@@ -40,7 +40,6 @@ sections:
   - section_filing: Filing
   - section_about_you: About you
   - section_download: Download  
-
 ---
 # interview order block
 mandatory: True
@@ -48,17 +47,19 @@ code: |
   nav.set_section('section_intro')
   sees_nav_bar
   how_to_use
+  docs_needed
+  accept_terms
   set_progress(5)
   about_expungement
   eligibility
   more_eligibility
-  accept_terms
   users[0].name.first  
   
   nav.set_section('section_conviction')
   set_progress(20)
   if filing_location.county == "Cook":
     cook_district
+  convictions_intro
   convictions.gather()
   if convictions.number_gathered() == 1:
     if convictions[0].other_name_check == False:
@@ -81,9 +82,11 @@ code: |
   nav.set_section('section_notice')
   set_progress(40)
   providing_notice
-  hearing_date
+  if hearing_date_check == True:
+    hearing_date
+    hearing_courtroom
   set_progress(60)
-  hearing_courtroom
+  
   states_attorney_address.address
   
   nav.set_section('section_filing')
@@ -205,7 +208,7 @@ continue button field: about_expungement
 question: |
   About cannabis expungement
 subquestion: |
-  Some cannabis convictions from before before June 25, 2019 in the state of Illinois can be expunged. To ‘expunge’ means to erase the police and court records of the conviction.
+  Some cannabis convictions from before before June 25, 2019, in the state of Illinois can be expunged. To ‘expunge’ means to erase the police and court records of the conviction.
 
   Some cannabis offenses are eligible for automatic expungement. Other cannabis convictions are eligible to be vacated and expunged. To vacate the cannabis conviction means to set aside the finding of guilt, as if it did not happen. To vacate and expunge an eligible cannabis conviction, a person must file a motion with the court.
 
@@ -216,14 +219,6 @@ continue button field: how_to_use
 question: |
   Instructions
 subquestion: |
-  To use this program you will need: 
-
-  * Court Dispositions for all of your criminal cases,
-  * Your Illinois State Police RAP Sheet, and
-  * If you had arrests or charges in Chicago, your Chicago Police RAP Sheet.
-  
-  ${collapse_template(find_information_help)}
-
   Set aside 10 to 20 minutes to finish this program. You can log in and save your work to return to later. 
  
   ${ collapse_template(help_example) }  
@@ -236,17 +231,30 @@ subject: |
 content: |  
   This is an example of help. Click again to hide.
 ---
+id: documents needed
+continue button field: docs_needed
+question: |
+  Instructions
+subquestion: |
+  To use this program you will need: 
+
+  * Court Dispositions for all of your criminal cases,
+  * Your Illinois State Police RAP Sheet, and
+  * If you had arrests or charges in Chicago, your Chicago Police RAP Sheet.
+  
+  ${collapse_template(find_information_help)}
+---
 template: find_information_help
 subject: |
   **Where can I find these documents?**
 content: |
   **Court Dispositions**
 
-  You can get court dispositions for each of your court cases from the courthouse where your case was heard. At the courthouse, ask the Circuit Clerk for copies of the court dispositions or use the public computer to look them up and print them out. There may be a fee to get copies or print out your court dispositions, but you can look at them on the computer and write down the information for free. Find your [**Circuit Clerk's website**](www.illinoiscourts.gov/courts/circuit-court/circuit-court-clerks/).
+  You can get court dispositions for your court cases from the courthouse. Ask the Circuit Clerk for copies of the court dispositions. You may be able to use the courthouse's public computer to look them up. There may be a fee to get copies or print out your court dispositions. Find your [**Circuit Clerk's website**](www.illinoiscourts.gov/courts/circuit-court/circuit-court-clerks/).
 
   **Illinois State Police RAP Sheet**
 
-  To make sure that you have all of the arrests, charges, and convictions in your record, you should get your Illinois State Police RAP sheet. You will need to complete a request form and pay a fee ($16-$20 in 2016). There may be a waiting period before you get your conviction information.
+  You can get an Illinois State Police RAP sheet to make sure you know all your arrests, charges, and convictions. You will need to complete a request form and pay a fee. There may be a waiting period before you get your information.
 
   Find conviction information request forms at the [**Illinois State Police website**](isp.illinois.gov/BureauOfIdentification/MyRecord) or by contacting:
 
@@ -258,9 +266,9 @@ content: |
 
   **Chicago Police RAP Sheet**
 
-  You can order a RAP sheet from the Chicago Police Department (CPD) if you were arrested in Chicago. There  will be a fee to get your RAP sheet, and you will have to return around a week later to pick it up.
+  You can get a RAP sheet from the Chicago Police Department (CPD) if you were arrested in Chicago. There will be a fee, and you will have to wait around a week before you can pick it up.
 
-  Go to the Chicago Police Department to get your Chicago RAP sheet:
+  The Chicago Police Department can be found at:
 
   Chicago Police Headquarters
   3510 S. Michigan Ave.,
@@ -277,10 +285,10 @@ question: |
   Eligibility
 subquestion: |
   Not all cannabis convictions can be expunged using these forms. Only Misdemeanor and Class 4 felony convictions for Sections 4 and 5 of the [**Cannabis Control Act**](www.ilga.gov/legislation/ilcs/ilcs3.asp?ActID=1937&ChapterID=53) are eligible.
+  
+   ${collapse_template(which_convictions_qualify)}
 
   For any other cannabis-related convictions, you may be able to use the [**Criminal Record Expungement or Sealing program**](www.illinoislegalaid.org/legal-information/criminal-record-expungement-or-sealing-request).
-  
-  ${collapse_template(which_convictions_qualify)}
 ---
 template: which_convictions_qualify
 subject: |
@@ -348,7 +356,7 @@ choices:
 ---
 template: finding_type
 subject: |
-  **What if I have convictions in multiple counties?**
+  **How can I find what type my conviction is?**
 content: |
   Look at your court dispositions and RAP sheets for "Type" and "Class" of the offense.
 
@@ -360,7 +368,7 @@ content: |
 id: invalid type disqualification
 continue button field: convictions[i].invalid_type_dq
 question: |
-  The ${convictions[i].date} conviction is not eligible to be expunged.
+  ${convictions[i].date} conviction ineligible
 subquestion: |
   Only misdemeanor cannabis offenses and class 4 felony cannabis offenses are eligible to be expunged.
   
@@ -374,15 +382,28 @@ subquestion: |
   Click **Back** if you made a mistake. Click **Next** if you would like to expunge another conviction or expunge the convictions you have already entered.
   % endif
 ---
+id: convictions intro
+continue button field: convictions_intro
+question: |
+  Convictions
+subquestion: |
+  The next questions will be about your cannabis conviction or convictions. The questions will check if they are eligible and ask for some details about them. This program will include all the eligible convictions in your forms.
+  
+  Some cannabis convictions may not be eligible for this program, but may be expungeable another way.  You may want to consult a lawyer about those convictions. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area. 
+---
 id: conviction date
 question: |
   % if i == 0:
-  When were you convicted of your offense?
+  When were you convicted of the first offense you want to expunge?
   % else:
   When were you convicted of your ${ordinal(i)} offense?
   % endif
 subquestion: |
-  Only convictions before June 25, 2019 can be expunged using this program
+  Only convictions before June 25, 2019 can be expunged using this program.
+  
+  % if i > 0:
+  So far you have entered information for convictions on these dates: ${comma_and_list(convictions.complete_elements().full_names())}.
+  % endif
 fields:
   - Date: convictions[i].date
     datatype: date
@@ -393,9 +414,9 @@ id: same case multiple convictions check
 question: |
   Were you convicted of any additional counts in the same case as your ${convictions[i].date} conviction?
 subquestion: |
-  If you were also convicted in the same case on a separate count (cannabis-related or otherwise) that is not eligible to be vacated, the court will not vacate and expungethe case.
+  If you were also convicted in the same case on a separate count (cannabis-related or otherwise) that is not eligible to be vacated, the court will not vacate and expunge the case.
 
-  However, it may be eligible for expungement or sealing using the [**regular criminal records expungement request**](https://www.illinoislegalaid.org/legal-information/criminal-record-expungement-or-sealing-request).
+  However, it may be eligible for expungement or sealing using the [**Criminal records expungement Easy Form**](https://www.illinoislegalaid.org/legal-information/criminal-record-expungement-or-sealing-request).
 fields:
   - no label: convictions[i].same_case_check
     datatype: yesnoradio
@@ -403,11 +424,11 @@ fields:
 id: same case multiple convictions disqualification
 continue button field: convictions[i].same_case_dq
 question: |
-  The ${convictions[i].date} conviction is not eligible to be expunged.
+  ${convictions[i].date} conviction ineligible
 subquestion: |
   Since you were convicted in the same case on a separate count that is not eligible to be vacated, the court will not vacate and expunge this conviction.
   
-  However, it may be eligible for expungement or sealing using the [**regular criminal records expungement request**](https://www.illinoislegalaid.org/legal-information/criminal-record-expungement-or-sealing-request).
+  However, it may be eligible for expungement or sealing using the [**Criminal records expungement Easy Form**](https://www.illinoislegalaid.org/legal-information/criminal-record-expungement-or-sealing-request).
   
   You can talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
   
@@ -457,7 +478,7 @@ fields:
 id: conditions disqualification
 continue button field: convictions[i].conditions_dq
 question: |
-  The ${convictions[i].date} conviction is not eligible to be expunged.
+  ${convictions[i].date} conviction ineligible
 subquestion: |
   A conviction cannot be expunged if you have not completed all conditions for it.
   
@@ -474,7 +495,7 @@ subquestion: |
 id: active sentence disqualfication
 continue button field: convictions[i].sentence_dq
 question: |
-  The ${convictions[i].date} conviction is not eligible to be expunged.
+  ${convictions[i].date} conviction ineligible
 subquestion: |
   A conviction cannot be expunged if you are still serving your sentence for it.
   
@@ -508,7 +529,7 @@ subquestion: |
 id: conviction eligibile
 continue button field: convictions[i].conviction_eligible
 question: |
-  Good news
+  Good news!
 subquestion: |
   The ${convictions[i].date} conviction is eligible to be expunged using this form.
 
@@ -535,14 +556,16 @@ subject: |
 content: |
   The case number can be found on your RAP sheet.
 
-  The Municipal case number ("muni #") is not always listed on the RAP sheet or ISP report. The court disposition for the felony case might show the muni # as the “related case.” Ask the Circuit Clerk how to find this information or use Get Legal Help  to find a lawyer.
+  The Municipal case number ("muni #") is not always listed on the RAP sheet or ISP report. The court disposition for the felony case might show the muni # as the “related case.” Ask the Circuit Clerk how to find this information or use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find a lawyer.
   
   [FILE CaseNumber.png]
 ---
 id: arrest info
 question: |
-  When were you arrested for the offense from the ${convictions[i].date} conviction, and what is the name of the agency that arrested you?
+  Arrest information
 subquestion: |
+  Enter arrest information about the ${convictions[i].date} conviction.
+  
   ${collapse_template(find_agency)}
 fields:
   - Arrest date: convictions[i].arrest_date
@@ -550,6 +573,8 @@ fields:
     max: ${convictions[i].date}
     min: '1/1/1901'
   - Agency: convictions[i].agency
+    help: |
+      This is the law enforcement agency that arrested you. This is often a police department. 
 ---
 template: find_agency
 subject: |
@@ -587,8 +612,8 @@ question: |
   Were you convicted under a name other than ${users[0].name.full(middle='full')} for any of your convictions?
 field: need_a_name_list_check
 choices:
-  - Yes, I was convicted under multiple names: True
-  - No, I was only convicted under the name ${users[0].name.full(middle='full')}: False
+  - Yes, I was convicted under multiple names.: True
+  - No, I was only convicted under the name ${users[0].name.full(middle='full')}.: False
 ---
 sets:
   - convictions[i].other_name_check
@@ -624,16 +649,19 @@ subquestion: |
   
   If you have been convicted under more names than those you have already listed, you may need to create multiple motions or use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
 ---
-#This is a horrible way to get this object list to behave.
+#Since convictions is an ALPeopleList each item needs name.first defined. I set name.first to the date for use in "So far you have entered convictions from these dates."
 code: |
-  convictions[i].name.first = word(ordinal(i))
-  convictions[i].name.last = "conviction"
+  convictions[i].name.first = word(convictions[i].date)
 ---
-id: another conviction check
+id: any other convictions
 question: |
   Is there another conviction you want to include in your motion?
 subquestion: |
   You can only include convictions that happened in ${end_in_county(filing_location.county)}. If you want to expunge convictions that happened in another county, you will have to go through this program again.
+  
+   % if i > 0:
+  So far you have entered information for convictions on these dates: ${comma_and_list(convictions.complete_elements().full_names())}.
+  % endif
 fields:
   - no label: convictions[i].there_is_another
     datatype: yesnoradio
@@ -649,6 +677,14 @@ subquestion: |
 
   The court clerk will deliver a copy of your *Motion* and the *Notice* to the State's Attorney.
 ---
+id: hearing date check
+question: |
+  Do you have a court hearing scheduled to expunge these convictions?
+field: hearing_date_check
+choices:
+  - Yes,: True
+  - No, I do not yet have a hearing scheduled: False 
+---
 id: hearing date time
 question: |
   When is your court hearing?
@@ -657,21 +693,10 @@ subquestion: |
 fields:
   - Date: hearing_date
     datatype: date
-    required: False
     min: ${ today().format("yyyy-MM-dd") }
     max: ${ today().plus(years=2) }
   - Time: hearing_time
     datatype: time
-    required: False
-validation code: |
-  if (not showifdef('hearing_date')):
-    knows_hearing_date = False
-  else:
-    knows_hearing_date = True
-  if (not showifdef('hearing_time')):
-    knows_hearing_time = False
-  else:
-    knows_hearing_time = True
 ---
 id: cook county courthouse
 question: |
@@ -910,6 +935,8 @@ id: states attorney address
 question: |
   What is the address of ${end_in_county(filing_location.county)}'s State's Attorney?
 subquestion: |
+  You can find this information by entering "${end_in_county(filing_location.county)} state's attorney address" into a search engine.
+  
   If you do not know this now, you can add it to your forms later. You will need to add the State's Attorney's address before you file your forms.
 fields:
   - Street address: states_attorney_address.address
@@ -928,7 +955,7 @@ fields:
 ---
 id: new case number
 question: |
-  Did the clerk give you a new case number for your *Motion to Vacate & Expunge*?
+  Did the clerk give you a new case number for this expungement case?
 fields:
   - no label: new_number_check
     datatype: yesnoradio
@@ -955,8 +982,9 @@ id: user birthdate
 question: |
   When were you born?
 fields:
-  - DOB: users[0].birthdate
+  - Date of birth: users[0].birthdate
     datatype: BirthDate
+    alMax: '6/25/2010'
 ---
 id: user race
 question: |
@@ -1068,11 +1096,13 @@ question: |
   What opportunities have you missed because of your cannabis conviction records?
 subquestion: |
   ${collapse_template(opportunities_help)}
+  
+  The form has space for about 20 lines of text, or about 1,350 characters.
 fields:
   - Missed opportunities: missed_opportunities
     input type: area
-    rows: 23
-    maxlength: 1200
+    rows: 16
+    maxlength: 1350
 ---
 template: opportunities_help
 subject: |
@@ -1083,9 +1113,9 @@ content: |
   * I applied for a job in the cannabis industry and I was denied my Agent Identification Card because of my criminal record.
   * I received an offer for a job position, however, after the criminal background check was done the offer was rescinded because of my criminal record.
   
-  **If you have been denied housing due to your criminal record**, it is important for the court to know specific examples where you have been denied housing. Helpful information can include the approximate date of denial, location/name of building, and how it affected you.
+  **If you have been denied housing due to your criminal record**, it is important for the court to know specific examples where you have been denied housing. Helpful information can include the approximate date of denial, location/name of building, and how it affected you. Here is an example:
 
-  For example, “In April 2020, I applied for housing with Oak Apartments in Chicago, and the manager told me they could not allow me to live there due to my criminal record. This apartment was in a good neighborhood and was affordable for my family, but we were forced to move into my sister’s home instead.”
+  * In April 2020, I applied for housing with Oak Apartments in Chicago, and the manager told me they could not allow me to live there due to my criminal record. This apartment was in a good neighborhood and was affordable for my family, but we were forced to move into my sister’s home instead.
 
   Attach any documentation of your housing denial, which can include: a letter from the landlord or management company that denied you housing and the background check that showed your conviction.
 ---
@@ -1226,11 +1256,13 @@ code: |
     additional_order.enabled = True
 ---
 objects:
-  - al_user_bundle: ALDocumentBundle.using(elements=[instructions, cannabis_expungement_single_pdf_bundle], filename="cannabis_expungement.pdf", title="All forms")
-  - al_court_bundle: ALDocumentBundle.using(elements=[instructions, cannabis_expungement_single_pdf_bundle], filename="cannabis_expungement.pdf", title="All forms")
+  - al_user_bundle: ALDocumentBundle.using(elements=[instructions, cannabis_expungement_motion_bundle, cannabis_expungement_notice_bundle, cannabis_expungement_order_bundle], filename="cannabis_expungement.pdf", title="All forms")
+  - al_court_bundle: ALDocumentBundle.using(elements=[instructions, cannabis_expungement_motion_bundle, cannabis_expungement_notice_bundle, cannabis_expungement_order_bundle], filename="cannabis_expungement.pdf", title="All forms")
 ---
 objects:
-  - cannabis_expungement_single_pdf_bundle: ALDocumentBundle.using(elements=[motion, notice, order, additional_convictions, additional_notice, additional_order], filename="cannabis_expungement_bundle.pdf", title="Cannabis expungement", enabled=True)
+  - cannabis_expungement_motion_bundle: ALDocumentBundle.using(elements=[motion, additional_convictions], filename="cannabis_expungement_motion_bundle.pdf", title="Motion", enabled=True)
+  - cannabis_expungement_notice_bundle: ALDocumentBundle.using(elements=[notice, additional_notice], filename="cannabis_expungement_notice_bundle.pdf", title="Notice", enabled=True)
+  - cannabis_expungement_order_bundle: ALDocumentBundle.using(elements=[order, additional_order], filename="cannabis_expungement_order_bundle.pdf", title="Order", enabled=True)
 ---
 attachment:
   variable name: instructions[i]
@@ -1250,7 +1282,7 @@ attachment:
   editable: False
   pdf template file: CXP_Motion_to_Vacate_and_Expunge.pdf
   fields:
-      - "filing_county_without_county": ${filing_location.county}
+      - "filing_county_without_county": ${filing_location.county.upper()}
       - "user_name": ${users[0].name.full(middle='full')}
       - "additional_names": ${comma_and_list(alternate_names_list.complete_elements().full_names())}
       - "new_case_number": ${new_case_number if new_number_check == True else ""}
@@ -1373,8 +1405,9 @@ attachment:
   editable: False
   pdf template file: CXP_Notice_of_Court_Date_for_Motion.pdf
   fields:
-      - "filing_county_without_county": ${filing_location.county}
+      - "filing_county_without_county": ${filing_location.county.upper()}
       - "user_name": ${users[0].name.full(middle='full')}
+      - "fee_waiver": ${fee_waiver_check}
       - "additional_names": ${comma_and_list(alternate_names_list.complete_elements().full_names())}
       - "new_case_number": ${new_case_number if new_number_check == True else ""}
       - "user_birth": ${users[0].birthdate}
@@ -1400,11 +1433,11 @@ attachment:
       - "case_number_seventeen": ${qualified_convictions[16].number_for_form}
       - "case_number_eighteen": ${qualified_convictions[17].number_for_form}
       - "additional_convictions": ${True if qualified_convictions.number_gathered() > 18 else False}
-      - "hearing_date": ${hearing_date if knows_hearing_date == True else ""}
-      - "hearing_time": ${format_time(hearing_time, format='h:mm') if knows_hearing_time == True else "" }
+      - "hearing_date": ${hearing_date if hearing_date_check == True else ""}
+      - "hearing_time": ${format_time(hearing_time, format='h:mm') if hearing_date_check == True else "" }
       - "hearing_am": ${True if format_time(hearing_time, format='a')=='AM' else False}
       - "hearing_pm": ${True if format_time(hearing_time, format='a')=='PM' else False}
-      - "hearing_courtroom": ${ hearing_courtroom}
+      - "hearing_courtroom": ${ hearing_courtroom if hearing_date_check == True else "" }
       - "hearing_address":  ${court_house_address}
       - "e_signature": ${ users[0].name.full(middle='full') if e_signature == True else ""}
       - "user_street": ${ users[0].address.line_one(bare=True)}
@@ -1420,7 +1453,7 @@ attachment:
   editable: False
   pdf template file: CXP_Order_Granting_or_Denying_Motion.pdf
   fields:
-      - "filing_county_without_county": ${filing_location.county}
+      - "filing_county_without_county": ${filing_location.county.upper()}
       - "user_name": ${users[0].name.full(middle='full')}
       - "additional_names": ${comma_and_list(alternate_names_list.complete_elements().full_names())}
       - "new_case_number": ${new_case_number if new_number_check == True else ""}
@@ -1454,7 +1487,7 @@ attachment:
   editable: False
   pdf template file: CXP_Additional_Cannabis_Convictions.pdf
   fields:
-      - "filing_county_without_county": ${filing_location.county}
+      - "filing_county_without_county": ${filing_location.county.upper()}
       - "user_name": ${users[0].name.full(middle='full')}
       - "additional_names": ${comma_and_list(alternate_names_list.complete_elements().full_names())}
       - "new_case_number": ${new_case_number if new_number_check == True else ""}
@@ -1566,7 +1599,7 @@ attachment:
   editable: False
   pdf template file: CXP_Additional_Notice_of_Court_Date.pdf
   fields:
-      - "filing_county_without_county": ${filing_location.county}
+      - "filing_county_without_county": ${filing_location.county.upper()}
       - "user_name": ${users[0].name.full(middle='full')}
       - "additional_names": ${comma_and_list(alternate_names_list.complete_elements().full_names())}
       - "new_case_number": ${new_case_number if new_number_check == True else ""}
@@ -1600,7 +1633,7 @@ attachment:
   editable: False
   pdf template file: CXP_Order_Granting_or_Denying_Motion.pdf
   fields:
-      - "filing_county_without_county": ${filing_location.county}
+      - "filing_county_without_county": ${filing_location.county.upper()}
       - "user_name": ${users[0].name.full(middle='full')}
       - "additional_names": ${comma_and_list(alternate_names_list.complete_elements().full_names())}
       - "new_case_number": ${new_case_number if new_number_check == True else ""}
@@ -1653,18 +1686,15 @@ review:
       **Were you convicted under multiple names?**
       ${word(yesno(need_a_name_list_check))}
     show if: convictions.number_gathered() > 1
+  - Edit: hearing_date_check
+    button: |
+      **Do you know when your hearing date is?**
+      ${word(yesno(hearing_date_check))}
   - Edit: hearing_date
     button: |
-      **When is your court hearing?**
-      % if knows_hearing_date == True and knows_hearing_time == True:
+      **Court date:**
       ${hearing_date}, ${hearing_time}
-      % elif knows_hearing_date == True and knows_hearing_time == False:
-      ${hearing_date}
-      % elif knows_hearing_date == False and knows_hearing_time == True:
-      ${hearing_time}
-      % else:
-      Not entered
-      % endif
+    show if: hearing_date_check
   - Edit: cook_district
     button: |
       **Which Cook County courthouse will you file in?**
@@ -1692,6 +1722,7 @@ review:
       % else:
       Not entered
       % endif
+    show if: hearing_date_check
   - Edit: states_attorney_address.address
     button: |
       **State's Attorney's Address:**
@@ -1905,18 +1936,15 @@ question: |
 subquestion: |
   Edit your answers below.
 review:
+  - Edit: hearing_date_check
+    button: |
+      **Do you know when your hearing date is?**
+      ${word(yesno(hearing_date_check))}
   - Edit: hearing_date
     button: |
-      **When is your court hearing?**
-      % if knows_hearing_date == True and knows_hearing_time == True:
+      **Court date:**
       ${hearing_date}, ${hearing_time}
-      % elif knows_hearing_date == True and knows_hearing_time == False:
-      ${hearing_date}
-      % elif knows_hearing_date == False and knows_hearing_time == True:
-      ${hearing_time}
-      % else:
-      Not entered
-      % endif
+    show if: hearing_date_check
   - Edit: cook_district
     button: |
       **Which Cook County courthouse will you file in?**
@@ -1944,6 +1972,7 @@ review:
       % else:
       Not entered
       % endif
+    show if: hearing_date_check
   - Edit: states_attorney_address.address
     button: |
       **State's Attorney's Address:**
