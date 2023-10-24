@@ -60,24 +60,25 @@ code: |
   if filing_location.county == "Cook":
     cook_district
   convictions_intro
+  convictions_count_code
   convictions.gather()
-  if convictions.number_gathered() == 1:
-    if convictions[0].other_name_check == False:
-      convictions[0].alternate_name.name.first
-  else:
-    if need_a_name_list_check == True:
-      name_limit = 0
-      for person in convictions:
-        if name_limit < 8:
-          if person.qualified == True:
-            if person.other_name_check == False:
-              name_limit += 1
-              person.alternate_name.name.first
-          else:
-            person.unqualified_name_flagging
-      if name_limit > 7:
-        too_many_names  
-  list_those_names
+  #if convictions.number_gathered() == 1:
+  #  if convictions[0].other_name_check == False:
+  #    convictions[0].alternate_name.name.first
+  #else:
+  #  if need_a_name_list_check == True:
+  #    name_limit = 0
+  #    for person in convictions:
+  #      if name_limit < 8:
+  #        if person.qualified == True:
+  #          if person.other_name_check == False:
+  #            name_limit += 1
+  #            person.alternate_name.name.first
+  #        else:
+  #          person.unqualified_name_flagging
+  #    if name_limit > 7:
+  #      too_many_names  
+  #list_those_names
   
   nav.set_section('section_notice')
   set_progress(40)
@@ -109,9 +110,13 @@ code: |
   a_little_more_logic
   court_house_address
   set_progress(100)
+  list_those_names
+  counting_is_fun
   get_docs_screen
 ---
 code: |
+  #reconsideration_containment = True
+  #if qualified_count_check < 3:
   convictions[i].date
   if convictions[i].type == "other":
     convictions[i].invalid_type_dq
@@ -145,7 +150,42 @@ code: |
     convictions[i].case_number 
     convictions[i].arrest_date
 
+  if i < 8:
+    if convictions[i].other_name_check == False:
+      convictions[i].alternate_name.name.first
+  else:
+    quick_name_count = 0
+    name_count_iteration = 0
+    while name_count_iteration < i:
+      if convictions[name_count_iteration].qualified == True:
+        if convictions[name_count_iteration].other_name_check == False:
+          quick_name_count += 1
+      name_count_iteration += 1
+    if quick_name_count < 8:
+      if convictions[i].other_name_check == False:
+        convictions[i].alternate_name.name.first
+    else:
+      too_many_names
+        
+
   convictions[i].qualified
+  #reconsideration_containment = False
+  #counting_is_fun
+  #if qualified_count_check > 1:
+  #  max_conviction_note
+  #  convictions.there_is_another = False
+  
+  if i >= 35:
+    quick_qualify_count = 0
+    quick_cycle_fun = 0
+    while quick_cycle_fun <= i:
+      if convictions[quick_cycle_fun].qualified == True:
+        quick_qualify_count += 1
+      quick_cycle_fun += 1
+    if quick_qualify_count >= 36:
+      max_conviction_note
+      convictions.there_is_another = False
+  
   convictions[i].complete = True
 ---
 sets:
@@ -191,6 +231,11 @@ reconsider: True
 code: |
   qualified_convictions = [conviction for conviction in convictions if conviction.qualified == True]
   filter_out_those_convictions = True
+---
+code: |
+  qualified_count = 0
+  name_count = 0
+  convictions_count_code = True
 ---
 id: welcome
 question: |
@@ -390,6 +435,13 @@ subquestion: |
   The next questions will be about your cannabis conviction or convictions. The questions will check if they are eligible and ask for some details about them. This program will include all the eligible convictions in your forms.
   
   Some cannabis convictions may not be eligible for this program, but may be expungeable another way.  You may want to consult a lawyer about those convictions. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area. 
+---
+id: max conviction note
+continue button field: max_conviction_note
+question: |
+  Maximum convictions
+subquestion: |
+  This program only creates forms to expunge 36 convictions. If you have more convictions you need to expunge, you may want to use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
 ---
 id: conviction date
 question: |
@@ -638,15 +690,14 @@ fields:
       name_suffix()
     required: False
 ---
+#
 id: too many names
 continue button field: too_many_names
 question: |
   About multiple names
 subquestion: |
   The *Motion to Vacate and Expunge* has limited space for multiple names.
-  
-   So far, you have listed ${comma_and_list(alternate_names_list.complete_elements().full_names())}.
-  
+    
   If you have been convicted under more names than those you have already listed, you may need to create multiple motions or use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
 ---
 #Since convictions is an ALPeopleList each item needs name.first defined. I set name.first to the date for use in "So far you have entered convictions from these dates."
@@ -663,7 +714,7 @@ subquestion: |
   So far you have entered information for convictions on these dates: ${comma_and_list(convictions.complete_elements().full_names())}.
   % endif
 fields:
-  - no label: convictions[i].there_is_another
+  - no label: convictions.there_is_another
     datatype: yesnoradio
 ---
 id: providing notice
@@ -1040,7 +1091,7 @@ template: intersex_trans_help
 subject: |
   **What if I am intersex or transgender?**
 content: |
-  DEVELOPER NOTE: Consult a SME on this subject. Does the answer need to correspond to the gender listed on the arrest or conviction? On the form of id the user will use at the hearing? Once we reach the SME review process, Vivian can reach out to a trans lawyer discord group if we do not have a SME on tap.
+  DEVELOPER NOTE: Consult a SME on this subject. Does the answer need to correspond to the gender listed on the arrest or conviction? On the form of id the user will use at the hearing?
 ---
 id: user address
 question: |
@@ -1119,23 +1170,6 @@ content: |
 
   Attach any documentation of your housing denial, which can include: a letter from the landlord or management company that denied you housing and the background check that showed your conviction.
 ---
-id: e-signature
-question: |
-  Do you want to add your e-signature to your forms?
-subquestion: |
-  ${ collapse_template(signature_help) }  
-  
-  
-  If you do not add your **{e-signature}**, you must sign your paper form before you file and deliver it.
-  
-  This program can put “/s/ ${users[0].name.full(middle='full')}” where you would sign your name. The court will accept this as your signature.
-fields:
-  - "Add e-signature?": e_signature
-    datatype: yesnoradio
-terms:
-  - "e-signature": |
-      An e-signature is an electronic signature. It is a digital version of a signature that has the same effect as a hand-written signature. 
----
 template: signature_help
 subject: |
   **What does it mean to sign the *Motion to Vacate and Expunge*?**
@@ -1152,16 +1186,12 @@ reconsider: True
 code: |
 
   alternate_names_list.clear()
-  if convictions.number_gathered() == 1:
-    if convictions[0].other_name_check == False:
-      alternate_names_list.append(convictions[0].alternate_name)
-  elif need_a_name_list_check == True:
-    nested_cap = 0
-    for person in convictions:
-      if nested_cap < 8:
-        if person.other_name_check == False:
-          alternate_names_list.append(person.alternate_name)
-          nested_cap += 1
+  nested_cap = 0
+  for person in convictions:
+    if nested_cap < 8:
+      if person.other_name_check == False:
+        alternate_names_list.append(person.alternate_name)
+        nested_cap += 1
   list_those_names = True
 ---
 reconsider: True
@@ -1185,9 +1215,12 @@ code: |
       any_misdemeanors = True
     elif person.type == "felony":
       any_felonies = True
-    person.number_for_form = person.case_number
-    if person.municipal_number != "":
-      person.number_for_form += ", "
+    if person.municipal_number == "":
+      person.number_for_form = person.case_number
+    elif person.municipal_number != "":
+      person.number_for_form = "Case: "
+      person.number_for_form += person.case_number
+      person.number_for_form += ", Municipal: "
       person.number_for_form += person.municipal_number
   a_little_more_logic = True
 ---
@@ -1250,7 +1283,7 @@ code: |
   additional_notice.enabled = False
   additional_order.enabled = False
   
-  if convictions.number_gathered() > 18:
+  if qualified_count_check > 18:
     additional_convictions.enabled = True
     additional_notice.enabled = True
     additional_order.enabled = True
@@ -1384,7 +1417,7 @@ attachment:
       - "arrest_date_sixteen": ${qualified_convictions[15].arrest_date}
       - "arrest_date_seventeen": ${qualified_convictions[16].arrest_date}
       - "arrest_date_eighteen": ${qualified_convictions[17].arrest_date}
-      - "additional_convictions": ${True if qualified_convictions.number_gathered() > 18 else False}
+      - "additional_convictions": ${True if qualified_count_check > 18 else False}
       - "current_age": ${ users[0].age_in_years()}
       - "age_at_last_arrest": ${ int(arrest_time_storage.years)}
       - "years_since_conviction": ${int(conviction_time_storage.years) if int(conviction_time_storage.years) != 0 else ""}
@@ -1432,7 +1465,7 @@ attachment:
       - "case_number_sixteen": ${qualified_convictions[15].number_for_form}
       - "case_number_seventeen": ${qualified_convictions[16].number_for_form}
       - "case_number_eighteen": ${qualified_convictions[17].number_for_form}
-      - "additional_convictions": ${True if qualified_convictions.number_gathered() > 18 else False}
+      - "additional_convictions": ${True if qualified_count_check > 18 else False}
       - "hearing_date": ${hearing_date if hearing_date_check == True else ""}
       - "hearing_time": ${format_time(hearing_time, format='h:mm') if hearing_date_check == True else "" }
       - "hearing_am": ${True if format_time(hearing_time, format='a')=='AM' else False}
@@ -1681,11 +1714,6 @@ review:
       % for my_var in convictions:
         * Conviction date: ${ my_var.date }
       % endfor
-  - Edit: need_a_name_list_check
-    button: |
-      **Were you convicted under multiple names?**
-      ${word(yesno(need_a_name_list_check))}
-    show if: convictions.number_gathered() > 1
   - Edit: hearing_date_check
     button: |
       **Do you know when your hearing date is?**
@@ -1869,7 +1897,7 @@ review:
       ${word(yesno(x.probation_check))}
   - Edit: x.probation_complete
     button: |
-      **Did you complete your Probation?**
+      **Did you complete your probation?**
       ${word(yesno(x.probation_complete))}
     show if: x.probation_check
   - Edit: x.sentence_check
@@ -1885,10 +1913,33 @@ id: convictions review
 continue button field: convictions.revisit
 question: |
   Edit the information about the convictions
-subquestion: |
+subquestion: |  
   ${ convictions.table }
-
-  ${ convictions.add_action() }        
+  
+ 
+  % if qualified_count_check < 3:
+  ${ convictions.add_action() } 
+  
+  % endif
+---
+#depends on:
+#  - reconsideration_containment
+reconsider: True
+code: |
+  qualified_count_check = 0
+  amount_to_check = convictions.number_gathered()
+  check_iteration = 0
+  while check_iteration < amount_to_check:
+    if convictions[check_iteration].qualified == True:
+      qualified_count_check += 1
+    check_iteration += 1
+  #for conviction in convictions:
+  #  if conviction.qualified == True:
+  #    qualified_count_check += 1
+  counting_is_fun = True
+---
+#% elif qualified_convictions.number_gathered() < 3:
+#${ convictions.add_action() } 
 ---
 section: Conviction info
 id: review convictions
@@ -1917,11 +1968,6 @@ review:
       % for my_var in convictions:
         * Conviction date: ${ my_var.date }
       % endfor
-  - Edit: need_a_name_list_check
-    button: |
-      **Were you convicted under multiple names?**
-      ${word(yesno(need_a_name_list_check))}
-    show if: convictions.number_gathered() > 1
   - Edit: missed_opportunities
     button: |
       **What opportunities have you missed because of your convictions?**
