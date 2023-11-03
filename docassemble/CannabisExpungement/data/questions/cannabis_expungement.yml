@@ -20,6 +20,7 @@ objects:
   - states_attorney_address: ALAddress
   - court_list: ALCourtLoader.using(file_name='docassemble.ILAO:data/sources/il_courts.xlsx')
   - alternate_names_list: ALPeopleList.using(object_type=ALIndividual, there_is_another=False)
+  - partial_name_list: ALPeopleList.using(object_type=ALIndividual, there_is_another=False)
   - court_house_address: DAObject
   - qualified_convictions: ALPeopleList.using(object_type=ALIndividual, complete_attribute=['complete'], there_are_any=True, there_is_another=False)
 ---
@@ -47,7 +48,7 @@ code: |
   nav.set_section('section_intro')
   sees_nav_bar
   how_to_use
-  docs_needed
+  #docs_needed
   accept_terms
   set_progress(5)
   about_expungement
@@ -59,6 +60,7 @@ code: |
   set_progress(20)
   if filing_location.county == "Cook":
     cook_district
+  alternate_name_list_starts_false
   convictions_intro
   convictions_count_code
   convictions.gather()
@@ -69,7 +71,7 @@ code: |
   #  if need_a_name_list_check == True:
   #    name_limit = 0
   #    for person in convictions:
-  #      if name_limit < 8:
+  #      if name_limit < 6:
   #        if person.qualified == True:
   #          if person.other_name_check == False:
   #            name_limit += 1
@@ -96,13 +98,14 @@ code: |
     fee_waiver_info
   
   nav.set_section('section_about_you')
+  missed_opportunities
   users[0].birthdate
   set_progress(80)
   users[0].race
   users[0].gender
   users[0].address.address
   users[0].has_email_address
-  missed_opportunities
+  
   e_signature
   
   nav.set_section('section_download')
@@ -150,9 +153,10 @@ code: |
     convictions[i].case_number 
     convictions[i].arrest_date
 
-  if i < 8:
-    if convictions[i].other_name_check == False:
-      convictions[i].alternate_name.name.first
+  if i < 6:
+    if convictions[i].qualified == True:
+      if convictions[i].other_name_check == False:
+        convictions[i].alternate_name.name.first
   else:
     quick_name_count = 0
     name_count_iteration = 0
@@ -161,7 +165,7 @@ code: |
         if convictions[name_count_iteration].other_name_check == False:
           quick_name_count += 1
       name_count_iteration += 1
-    if quick_name_count < 8:
+    if quick_name_count < 6:
       if convictions[i].other_name_check == False:
         convictions[i].alternate_name.name.first
     else:
@@ -245,7 +249,9 @@ subquestion: |
 
   This program will help you create forms to clear cannabis-related convictions from your criminal record.
   
-  The forms you make with this program can only be used in Illinois
+  The forms you make with this program can only be used in Illinois.
+  
+  To learn more, read ILAO's article about [**expunging cannabis offenses**](https://www.illinoislegalaid.org/legal-information/i-have-cannabis-arrest-or-conviction).
 field: sees_nav_bar
 ---
 id: about expungement
@@ -258,12 +264,22 @@ subquestion: |
   Some cannabis offenses are eligible for automatic expungement. Other cannabis convictions are eligible to be vacated and expunged. To vacate the cannabis conviction means to set aside the finding of guilt, as if it did not happen. To vacate and expunge an eligible cannabis conviction, a person must file a motion with the court.
 
   This program will create a *Motion to Vacate & Expunge Eligible Cannabis Convictions* that will include any of your eligible cannabis convictions.
+  
+  To learn more about the types of Cannabis convictions that can be expunged, read ILAO's article about [**clearing cannabis convictions from a criminal record**](https://www.illinoislegalaid.org/new-leaf/weed-legal-now-can-i-clear-my-record).
 ---
 id: instructions
 continue button field: how_to_use
 question: |
   Instructions
 subquestion: |
+  To use this program you will need: 
+
+  * Court Dispositions for all of your criminal cases,
+  * Your Illinois State Police RAP Sheet, and
+  * If you had arrests or charges in Chicago, your Chicago Police RAP Sheet.
+  
+  ${collapse_template(find_information_help)}
+  
   Set aside 10 to 20 minutes to finish this program. You can log in and save your work to return to later. 
  
   ${ collapse_template(help_example) }  
@@ -316,8 +332,8 @@ content: |
   The Chicago Police Department can be found at:
 
   Chicago Police Headquarters
-  3510 S. Michigan Ave.,
-  Chicago, IL 60653
+  3510 S. Michigan Ave.
+  Chicago, Illinois 60653
   (312) 745-5508
 
   Ask for a copy of your Illinois State Police Statewide Criminal History Transcript. The Chicago Police will provide your state record at no extra cost.
@@ -341,11 +357,11 @@ subject: |
 content: |
   The following list of charges and amounts is a guide for cannabis convictions that may be vacated and expunged using these forms.
 
-  * POSSESSION OF CANNABIS (all dates before 6/25/19), 500 grams or less
-  * ATTEMPTED POSSESSION OF CANNABIS (between 8/15/97 and 6/24/19), 2000 grams or less
-  * ATTEMPTED POSSESSION OF CANNABIS (prior to 8/15/97), Any amount
-  * MANUFACTURE / DELIVERY OF CANNABIS (between 9/24/83 and 6/24/19) ,30 grams or less
-  * ATTEMPTED MANUFACTURE / DELIVERY OF CANNABIS (between 9/24/83 and 6/24/19), 500 grams or less
+  * **Possession of Cannabis** (all dates before 6/25/19), 500 grams or less
+  * **Attempted Possession of Cannabis** (between 8/15/97 and 6/24/19), 2000 grams or less
+  * **Attempted Possession of Cannabis** (prior to 8/15/97), Any amount
+  * **Manufacture /  Delivery of Cannabis** (between 9/24/83 and 6/24/19) ,30 grams or less
+  * **Attempted Manufacture / Delivery of Cannabis** (between 9/24/83 and 6/24/19), 500 grams or less
 ---
 id: more eligibility
 continue button field: more_eligibility
@@ -432,7 +448,7 @@ continue button field: convictions_intro
 question: |
   Convictions
 subquestion: |
-  The next questions will be about your cannabis conviction or convictions. The questions will check if they are eligible and ask for some details about them. This program will include all the eligible convictions in your forms.
+  The next screens will ask about your cannabis convictions. They will check if the convictions are eligible and ask for some details about them. This program will include all the eligible convictions in your forms.
   
   Some cannabis convictions may not be eligible for this program, but may be expungeable another way.  You may want to consult a lawyer about those convictions. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area. 
 ---
@@ -592,7 +608,7 @@ id: conviction case number
 question: |
   What is the court case number of your ${convictions[i].date} conviction?
 subquestion: |
-  If there is a municipal case number, you should enter that as well.
+  If there is a municipal case number, you should enter that as well. Not all cases will have a municipal case number
   
   The municipal number usually has the same Central Booking (CB) number as the felony case.
   
@@ -600,6 +616,8 @@ subquestion: |
 fields:
   - Case number: convictions[i].case_number
   - Municipal number: convictions[i].municipal_number
+    help: |
+      Not all cases have a municipal number.
     required: False
 ---
 template: case_number_help
@@ -608,7 +626,7 @@ subject: |
 content: |
   The case number can be found on your RAP sheet.
 
-  The Municipal case number ("muni #") is not always listed on the RAP sheet or ISP report. The court disposition for the felony case might show the muni # as the “related case.” Ask the Circuit Clerk how to find this information or use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find a lawyer.
+  The Municipal case number ("muni #") is not always listed on the RAP sheet or ISP report. Some cases do not have municipal numbers. The court disposition for the felony case might show the municipal number as the “related case.” Ask the Circuit Clerk how to find this information or use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find a lawyer.
   
   [FILE CaseNumber.png]
 ---
@@ -625,6 +643,7 @@ fields:
     max: ${convictions[i].date}
     min: '1/1/1901'
   - Agency: convictions[i].agency
+    maxlength: 35
     help: |
       This is the law enforcement agency that arrested you. This is often a police department. 
 ---
@@ -671,15 +690,40 @@ sets:
   - convictions[i].other_name_check
 id: other name check
 question: |
+  % if any_alternate_names_yet == False:
   Was your name listed as ${users[0].name.full(middle='full')} for your ${convictions[i].date} conviction?
+  % else:
+  Was your name listed as ${users[0].name.full(middle='full')} or one of the other names you have listed for your ${convictions[i].date} conviction?
+  % endif
+subquestion: |
+  % if any_alternate_names_yet == True:
+  So far you have listed: ${comma_and_list(partial_name_list)}.
+  % endif
 field: convictions[i].other_name_check
 choices:
   - Yes: True
   - No, I was convicted under a different name.: False
 ---
+#reconsider: True
+#code: |
+#  any_alternate_names_yet = False
+#  what_is_the_number_gathered = convictions.number_gathered()
+#  what_is_the_number_gathered -= 1
+#  if convictions.number_gathered() <= 1:
+#    any_alternate_names_yet = False
+#  else:
+#    alt_name_counter = 0
+#    while alt_name_counter < what_is_the_number_gathered:
+#      if convictions[alt_name_counter].other_name_check == False:
+#        any_alternate_names_yet = True
+---
 id: conviction name
 question: |
   What name was used for you in the ${convictions[i].date} conviction?
+subquestion: |
+  % if any_alternate_names_yet == True:
+  So far you have entered the names ${comma_and_list(partial_name_list)}.
+  % endif
 fields:
   - First: convictions[i].alternate_name.name.first
   - Middle: convictions[i].alternate_name.name.middle
@@ -689,8 +733,15 @@ fields:
     code: |
       name_suffix()
     required: False
+validation code: |
+  partial_name_list.append(convictions[i].alternate_name.name.full(middle='full'))
+  any_alternate_names_yet = True
 ---
-#
+code: |
+  any_alternate_names_yet = False
+  partial_name_list.clear()
+  alternate_name_list_starts_false = True
+---
 id: too many names
 continue button field: too_many_names
 question: |
@@ -733,14 +784,12 @@ question: |
   Do you have a court hearing scheduled to expunge these convictions?
 field: hearing_date_check
 choices:
-  - Yes,: True
-  - No, I do not yet have a hearing scheduled: False 
+  - Yes: True
+  - No, I do not yet have a hearing scheduled.: False 
 ---
 id: hearing date time
 question: |
-  When is your court hearing?
-subquestion: |
-  If you do not have a court hearing scheduled, you can leave this blank.
+  When and where is your court hearing?
 fields:
   - Date: hearing_date
     datatype: date
@@ -748,6 +797,11 @@ fields:
     max: ${ today().plus(years=2) }
   - Time: hearing_time
     datatype: time
+  - note: |
+      If you have not been assigned a courtroom yet, you can leave this next field blank.
+  - Court room: hearing_courtroom
+    required: False
+    maxlength: 20
 ---
 id: cook county courthouse
 question: |
@@ -972,21 +1026,21 @@ code: |
   court_zip = str(trial_court.address.zip)
   court_house_address = court_name + ", " + court_street_address + ", " + court_city + ", " + court_state + " " + court_zip
 ---
-id: hearing courtroom
-question: |
-  What courtroom have you been assigned?
-subquestion: |
-  If you have not been assigned a courtroom yet, you can leave this blank.
-fields: 
-  - Courtroom: hearing_courtroom
-    required: False
+#id: hearing courtroom
+#question: |
+#  What courtroom have you been assigned?
+#subquestion: |
+#  If you have not been assigned a courtroom yet, you can leave this blank.
+#fields: 
+#  - Courtroom: hearing_courtroom
+#    required: False
 ---
 #Will need to add information for how to find this info, at least for the most populous counties.
 id: states attorney address
 question: |
   What is the address of ${end_in_county(filing_location.county)}'s State's Attorney?
 subquestion: |
-  You can find this information by entering "${end_in_county(filing_location.county)} state's attorney address" into a search engine.
+  You can find this information by looking up the [**"Illinois ${end_in_county(filing_location.county)} state's attorney address"**](https://www.google.com/search?q=${filing_location.county}+county+illinois+state%27s+attorney%27s+office) on the internet. 
   
   If you do not know this now, you can add it to your forms later. You will need to add the State's Attorney's address before you file your forms.
 fields:
@@ -1014,6 +1068,7 @@ fields:
     show if: 
       variable: new_number_check
       is: True
+    maxlength: 20
 ---
 id: fee waiver check
 question: |
@@ -1027,7 +1082,7 @@ continue button field: fee_waiver_info
 question: |
   Fee waiver
 subquestion: |
-  You can use ILAO's [**Fee Waiver Easy Form**](www.illinoislegalaid.org/legal-information/fee-waiver) to fill out your fee waiver.
+  You can use ILAO's [**Fee waiver Easy Form**](www.illinoislegalaid.org/legal-information/fee-waiver) to fill out your fee waiver.
 ---
 id: user birthdate
 question: |
@@ -1059,6 +1114,7 @@ fields:
       - White: White
       - Other: Other
   - Other: users[0].other_race
+    maxlength: 20
     show if: 
       variable: users[0].race
       is: "Other"    
@@ -1083,6 +1139,7 @@ fields:
       - Female
       - Other
   - Other: users[0].other_gender
+    maxlength: 20
     show if: 
       variable: users[0].gender
       is: "Other"  
@@ -1148,7 +1205,7 @@ question: |
 subquestion: |
   ${collapse_template(opportunities_help)}
   
-  The form has space for about 20 lines of text, or about 1,350 characters.
+  The form has space for about 24 lines of text, or about 1,350 characters.
 fields:
   - Missed opportunities: missed_opportunities
     input type: area
@@ -1188,11 +1245,23 @@ code: |
   alternate_names_list.clear()
   nested_cap = 0
   for person in convictions:
-    if nested_cap < 8:
+    if nested_cap <= 6:
       if person.other_name_check == False:
         alternate_names_list.append(person.alternate_name)
         nested_cap += 1
   list_those_names = True
+---
+reconsider: True
+code: |
+  partial_name_list.clear()
+  quick_counter_ceiling = convictions.number_gathered()
+  quick_counter_ceiling -= 1
+  quick_counter = 0
+  while quick_counter < quick_counter_ceiling:
+    if convictions[quick_counter].other_name_check == False:
+      partial_name_list.append(convictions[i].alternate_name)
+      quick_counter += 1
+  make_partial_list = True
 ---
 reconsider: True
 code: |
@@ -1218,9 +1287,10 @@ code: |
     if person.municipal_number == "":
       person.number_for_form = person.case_number
     elif person.municipal_number != "":
-      person.number_for_form = "Case: "
-      person.number_for_form += person.case_number
-      person.number_for_form += ", Municipal: "
+      #person.number_for_form = "Case: "
+      person.number_for_form = person.case_number
+      #person.number_for_form += ", Municipal: "
+      person.number_for_form += ", Muni: "
       person.number_for_form += person.municipal_number
   a_little_more_logic = True
 ---
@@ -1428,7 +1498,7 @@ attachment:
       - "user_street": ${ users[0].address.line_one(bare=True)}
       - "user_csz": ${users[0].address.line_two()}
       - "user_phone": ${phone_number_formatted(users[0].phone_number)}
-      - "user_email": ${users[0].email if users[0].has_email_address == True else False}   
+      - "user_email": ${users[0].email if users[0].has_email_address == True else ""}   
 ---
 attachment:
   variable name: notice[i]
@@ -1473,10 +1543,11 @@ attachment:
       - "hearing_courtroom": ${ hearing_courtroom if hearing_date_check == True else "" }
       - "hearing_address":  ${court_house_address}
       - "e_signature": ${ users[0].name.full(middle='full') if e_signature == True else ""}
+      - "signature_date": ${ today() if e_signature == True else ""}
       - "user_street": ${ users[0].address.line_one(bare=True)}
       - "user_csz": ${users[0].address.line_two()}
       - "user_phone": ${phone_number_formatted(users[0].phone_number)}
-      - "user_email": ${users[0].email if users[0].has_email_address == True else False}
+      - "user_email": ${users[0].email if users[0].has_email_address == True else ""}
 ---
 attachment:
   variable name: order[i]
@@ -1619,10 +1690,11 @@ attachment:
       - "arrest_date_thirtyfive": ${qualified_convictions[34].arrest_date}
       - "arrest_date_thirtysix": ${qualified_convictions[35].arrest_date}
       - "e_signature": ${ users[0].name.full(middle='full') if e_signature == True else ""}
+      - "signature_date": ${ today() if e_signature == True else ""}
       - "user_street": ${ users[0].address.line_one(bare=True)}
       - "user_csz": ${users[0].address.line_two()}
       - "user_phone": ${phone_number_formatted(users[0].phone_number)}
-      - "user_email": ${users[0].email if users[0].has_email_address == True else False}
+      - "user_email": ${users[0].email if users[0].has_email_address == True else ""}
 ---
 attachment:
   variable name: additional_notice[i]
