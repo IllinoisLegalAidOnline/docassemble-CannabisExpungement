@@ -62,7 +62,7 @@ code: |
     cook_district
   alternate_name_list_starts_false
   convictions_intro
-  convictions_count_code
+  #convictions_count_code
   convictions.gather()
   #if convictions.number_gathered() == 1:
   #  if convictions[0].other_name_check == False:
@@ -114,19 +114,22 @@ code: |
   court_house_address
   set_progress(100)
   list_those_names
-  counting_is_fun
+  #counting_is_fun
   get_docs_screen
 ---
+#This is the convictions gather code block
 code: |
   #reconsideration_containment = True
   #if qualified_count_check < 3:
   convictions[i].date
+  #After asking for the conviction date, the program goes through questions checking that the conviction qualifies for expungement. Each line that ends in "_dq" is pulling up a continue button field and then going to the "there_is_another" question.
   if convictions[i].type == "other":
     convictions[i].invalid_type_dq
 
   elif convictions[i].same_case_check == True:
     convictions[i].same_case_dq
 
+  #The path splits here, but is mostly the same. If probation_check is true, there is an extra qualification question to ask. AFter that question, this path is the same as the other path. So why are they separated for so long? Well, this code block uses elif conditions so the "_dq" flags can be continue button fields instead of kickout screens. There is probably a more elegant way to handle it, but this does at least work.
   elif convictions[i].probation_check == True:
     if convictions[i].probation_complete == True:
       convictions[i].probation_dq
@@ -138,10 +141,12 @@ code: |
       convictions[i].conditions_dq
 
     else:  
+      #Path A's post-qualification questions
       convictions[i].conviction_eligible
       convictions[i].case_number 
       convictions[i].arrest_date
 
+  #Per the above comment, this is the other path branch that is largely the same as the first, it just has one fewer qualification question to ask. Any change made to the gather loop's interview path may need to be made twice as a result. My apologies. Maybe I will smooth this out.
   elif convictions[i].sentence_check == True:
     convictions[i].sentence_dq
 
@@ -149,15 +154,19 @@ code: |
     convictions[i].conditions_dq
 
   else:  
+    #Path B's post-qualification questions
     convictions[i].conviction_eligible
     convictions[i].case_number 
     convictions[i].arrest_date
 
+  #This seciton of the gather code block deals with alternate names. Currently, due to template space, the program only allows for six alternate names.
   if i < 6:
+    #This section for when i is less than 6 exists so the program can run less code when there is no possibility the user has maxed out the alternate name list. If there were no limit to the amount of alternate names, this whole section would be little more than the next 3 lines.
     if convictions[i].qualified == True:
       if convictions[i].other_name_check == False:
         convictions[i].alternate_name.name.first
   else:
+    #Now the user has entered enough convictions we have to make sure they haven't entered too many names! Creating a list of alternate names requires iterating through the convictions list, which is tricky given that this code block is the gathering code for that list! Consequently, here and elsewhere in the program we use a while loop. quick_name_count tracks how many convictions have alternate names, name_counter_iteration increments each pass through the loop. The loop stops once it has checked every conviction before the one currently being gathered.
     quick_name_count = 0
     name_count_iteration = 0
     while name_count_iteration < i:
@@ -165,13 +174,14 @@ code: |
         if convictions[name_count_iteration].other_name_check == False:
           quick_name_count += 1
       name_count_iteration += 1
+    #This if statement asks if there is an alternate name if the user hasn't already entered 6 alternate names. The corresponding else statement tells the user they have already entered as many names as the program will accept.
     if quick_name_count < 6:
       if convictions[i].other_name_check == False:
         convictions[i].alternate_name.name.first
     else:
       too_many_names
         
-
+  #This variable is used to keep track of whether a conviction qualifies for expungement. For reasons discussed in the code block that defines it, this variable is not defined by the gather code block.
   convictions[i].qualified
   #reconsideration_containment = False
   #counting_is_fun
@@ -179,19 +189,23 @@ code: |
   #  max_conviction_note
   #  convictions.there_is_another = False
   
+  #The templates max out at 36 qualified convictions, but unqualified convictions don't appear on the forms at all. Therefore, we can allow the user to enter more than 36 convictions if some of the first 36 do not qualify. This calculation isn't necessary until the user enters a 36th conviction. At that point, at the end of each iteration through the gather loop this code runs a check to see if there have been 36 qualified convictions entered.
   if i >= 35:
+    #quick_qualify_count tracks how many convictions qualify, quick_cycle_fun increments with each iteration of the while loop. The while loop stops once it has checked every conviction entered prior to the current one.
     quick_qualify_count = 0
     quick_cycle_fun = 0
     while quick_cycle_fun <= i:
       if convictions[quick_cycle_fun].qualified == True:
         quick_qualify_count += 1
       quick_cycle_fun += 1
+     #This if statement ends the iterations of the gather loop if there have been 36 qualified convictions entered.
     if quick_qualify_count >= 36:
       max_conviction_note
       convictions.there_is_another = False
   
   convictions[i].complete = True
 ---
+#This code block sets a conviction's other_name_check variable to True if it does not qualify for expungement. This block should be redundant: if statements elsewhere in the yml involving the other_name_check variable should be nested within an if statement "if convictions[i].qualified == True".
 sets:
   - convictions[i].unqualified_name_flagging
 depends on:
@@ -201,6 +215,7 @@ code: |
     convictions[i].other_name_check = True
   convictions[i].unqualified_name_flagging = True
 ---
+#This code block sets a variable that keeps track of whether each conviction qualifies for expungement or not. This variable is referenced in a few other sections of the yml. It should more or less mirror the eligibility questions in the convictions gather loop. It is separated in order to make the "qualified" variable update if the user edits their answers and causes a conviction to qualify or no longer qualify.
 sets:
   - convictions[i].qualified
 depends on:
@@ -231,15 +246,16 @@ code: |
     else:
       convictions[i].qualified = True
 ---
+#This is known as a list comprehension. It creates a list that is just every item in another list that meets a given condition. qualifed_convictions is created here; it has the same contents as the convictions list except it does not include convictions that cannot be expunged. The qualified_convictions list is used in the template. reconsider must be set to True to ensure that the qualified_convictions list will be updated if the convictions list is changed. filter_out_those_convictions is just a variable used to activate this code block.
 reconsider: True
 code: |
   qualified_convictions = [conviction for conviction in convictions if conviction.qualified == True]
   filter_out_those_convictions = True
 ---
-code: |
-  qualified_count = 0
-  name_count = 0
-  convictions_count_code = True
+#code: |
+#  qualified_count = 0
+#  name_count = 0
+#  convictions_count_code = True
 ---
 id: welcome
 question: |
@@ -743,6 +759,7 @@ validation code: |
   partial_name_list.append(convictions[i].alternate_name.name.full(middle='full'))
   any_alternate_names_yet = True
 ---
+#partial_name_list is a list used in subquestions to list out the names the user has entered so far. any_alternate_names_yet is a true/false variable that is flagged to True when an alternate name is entered. This code block provides the initial states for both. alternate_name_list_starts_false is just used to activate this code block. This code block should not have a depends on section or reconsider set to True; it should only be run once.
 code: |
   any_alternate_names_yet = False
   partial_name_list.clear()
@@ -1245,10 +1262,12 @@ content: |
 
   See **[Illinois Supreme Court Rule 137](https://www.illinoiscourts.gov/supreme-court-rules)** for more information.
 ---
+#This code block creates the list of alternate names for the template.
 reconsider: True
 code: |
-
+  
   alternate_names_list.clear()
+  #nested_cap is incremented whenever a qualified conviction has an alternate name. Once it hits 6, all the names the program will list have been entered and there is no need to check the remaining convictions.
   nested_cap = 0
   for person in convictions:
     if nested_cap <= 6:
@@ -1258,6 +1277,7 @@ code: |
           nested_cap += 1
   list_those_names = True
 ---
+#This is similar to the code generated alternate_names_list. The difference is that this uses a while loop instead of a for loop so it can be run before the convictions list is fully gathered. I'm not certain both are necessary; I see no reason why this block couldn't also be used to generate the list of alternate names for the forms. OH! There is one issue with this one that the other one doesn't have; if a user is able to list more than six alternate names through review screen chicanery, partial_name_list can list more than 6 names but alternate_names_list will only list the first six alternate names. That could most certainly be addressed here as well, but for now I will let sleeping dogs lie.
 reconsider: True
 code: |
   partial_name_list.clear()
@@ -1265,32 +1285,41 @@ code: |
   quick_counter_ceiling -= 1
   quick_counter = 0
   while quick_counter < quick_counter_ceiling:
-    if convictions[quick_counter].other_name_check == False:
-      partial_name_list.append(convictions[i].alternate_name)
-      quick_counter += 1
+    if convictions[quick_counter].qualified == True:
+      if convictions[quick_counter].other_name_check == False:
+        partial_name_list.append(convictions[i].alternate_name)
+        quick_counter += 1
   make_partial_list = True
 ---
+#This code block runs at the end of the interview, generating variables used in the templates.
 reconsider: True
 code: |
+  #There are fields in a template where the user enters how much time has passed since their most recent conviction and their age upon their most recent arrest. arrest_time_storage and conviction_time_storage will be used to calculate that. these initial values are intended to get replaced by values based on the arrest and conviction dates from the qualified_convictions list.
   arrest_time_storage = date_difference(starting=users[0].birthdate, ending=users[0].birthdate)
   conviction_time_storage = date_difference(starting='1/1/1901', ending=today())
+  #There are checkboxes to mark whether any of the convictions are a misdemeanor or a felony. These variables start as False, but will be set to true if any of the convictions are a misdemeanor or a felony, respectively.
   any_misdemeanors = False
   any_felonies = False
   #alternate_names_list.clear()
   
+  #Here is our for loop. Note that we are iterating through qualified_convictions, not convictions.
   for person in qualified_convictions:
+    #We want to catch the most recent arrest date and calculate the user's age at that arrest. temp_arrest_time_ref is a date_difference variable that is reset for each iteration and compared to the storage variable used in the template. If temp_arrest_time_ref is greater in years, its value will be entered into arrest_time_storage
     temp_arrest_time_ref = date_difference(starting=users[0].birthdate, ending=person.arrest_date)
     if temp_arrest_time_ref.years > arrest_time_storage.years:
       arrest_time_storage = temp_arrest_time_ref
+     #We want to catch the most recent conviction date and calculate how many years have passed since. temp_conviction_time_ref is a date_difference variable that is reset for each iteration and compared to the storage variable used in the template. If temp_conviction_time_ref is lesser in years, its value will be entered into conviction_time_storage
     temp_conviction_time_ref = date_difference(starting=person.date, ending=today())
     if temp_conviction_time_ref.years < conviction_time_storage.years:
       conviction_time_storage = temp_conviction_time_ref
     #if person.other_name_check == False:
       #alternate_names_list.append(person.alternate_name.name.full(middle='full'))
+    #here is where the any_misdemeanors and/or any_felonies variables will be flagged as True.
     if person.type == "misdemeanor":
       any_misdemeanors = True
     elif person.type == "felony":
       any_felonies = True
+    #number_for_form is a variable that contains either just the case number or the case number & municipal number presented cleanly. As of this writing--Nov 6 2023--we are planning to check in with a SME on the language we use here.
     if person.municipal_number == "":
       person.number_for_form = person.case_number
     elif person.municipal_number != "":
@@ -1997,13 +2026,14 @@ subquestion: |
   ${ convictions.table }
   
  
-  % if qualified_count_check < 3:
+  % if qualified_count_check < 36:
   ${ convictions.add_action() } 
   
   % endif
 ---
 #depends on:
 #  - reconsideration_containment
+#This code counts the number of qualified convictions.This is used to determine whether the "additional" templates need to be enabled and whether the Add action in the convictions table should be disabled
 reconsider: True
 code: |
   qualified_count_check = 0
@@ -2013,9 +2043,6 @@ code: |
     if convictions[check_iteration].qualified == True:
       qualified_count_check += 1
     check_iteration += 1
-  #for conviction in convictions:
-  #  if conviction.qualified == True:
-  #    qualified_count_check += 1
   counting_is_fun = True
 ---
 #% elif qualified_convictions.number_gathered() < 3:
