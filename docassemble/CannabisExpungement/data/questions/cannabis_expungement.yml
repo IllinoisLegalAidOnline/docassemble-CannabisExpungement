@@ -265,7 +265,7 @@ subquestion: |
 
   This program will create a *Motion to Vacate & Expunge Eligible Cannabis Convictions* that will include any of your eligible cannabis convictions.
   
-  To learn more about the types of Cannabis convictions that can be expunged, read ILAO's article about [**clearing cannabis convictions from a criminal record**](https://www.illinoislegalaid.org/new-leaf/weed-legal-now-can-i-clear-my-record).
+  To learn more about the types of cannabis convictions that can be expunged, read ILAO's article about [**clearing cannabis convictions from a criminal record**](https://www.illinoislegalaid.org/new-leaf/weed-legal-now-can-i-clear-my-record).
 ---
 id: instructions
 continue button field: how_to_use
@@ -319,11 +319,11 @@ content: |
 
   Find conviction information request forms at the [**Illinois State Police website**](isp.illinois.gov/BureauOfIdentification/MyRecord) or by contacting:
 
-  Illinois State Police
-  Bureau of Identification
-  260 North Chicago Street
-  Joliet, Illinois 60432
-  (815) 740-5160
+  Illinois State Police   
+  Bureau of Identification   
+  260 North Chicago Street   
+  Joliet, Illinois 60432   
+  (815) 740-5160   
 
   **Chicago Police RAP Sheet**
 
@@ -331,10 +331,10 @@ content: |
 
   The Chicago Police Department can be found at:
 
-  Chicago Police Headquarters
-  3510 S. Michigan Ave.
-  Chicago, Illinois 60653
-  (312) 745-5508
+  Chicago Police Headquarters  
+  3510 S. Michigan Ave.  
+  Chicago, Illinois 60653  
+  (312) 745-5508  
 
   Ask for a copy of your Illinois State Police Statewide Criminal History Transcript. The Chicago Police will provide your state record at no extra cost.
 
@@ -610,12 +610,18 @@ question: |
 subquestion: |
   If there is a municipal case number, you should enter that as well. Not all cases will have a municipal case number
   
+  % if convictions[i].type == "felony":
   The municipal number usually has the same Central Booking (CB) number as the felony case.
+  % else:
+  The municipal number usually has the same Central Booking (CB) number as the misdemeanor case.
+  % endif
   
   ${collapse_template(case_number_help)}
 fields:
   - Case number: convictions[i].case_number
+    maxlength: 30
   - Municipal number: convictions[i].municipal_number
+    maxlength: 30
     help: |
       Not all cases have a municipal number.
     required: False
@@ -676,7 +682,7 @@ subject: |
 content: |
   For this question, you should enter your current legal name.
   
-  You will have an opportunity to list other names you were convicted under later in this interview.
+  You will have an opportunity to list other names you were convicted under on another screen.
 ---
 id: need a name list check
 question: |
@@ -697,7 +703,7 @@ question: |
   % endif
 subquestion: |
   % if any_alternate_names_yet == True:
-  So far you have listed: ${comma_and_list(partial_name_list)}.
+  So far you have listed these other names: ${comma_and_list(partial_name_list)}.
   % endif
 field: convictions[i].other_name_check
 choices:
@@ -799,7 +805,7 @@ fields:
     datatype: time
   - note: |
       If you have not been assigned a courtroom yet, you can leave this next field blank.
-  - Court room: hearing_courtroom
+  - Courtroom: hearing_courtroom
     required: False
     maxlength: 20
 ---
@@ -1040,7 +1046,7 @@ id: states attorney address
 question: |
   What is the address of ${end_in_county(filing_location.county)}'s State's Attorney?
 subquestion: |
-  You can find this information by looking up the [**"Illinois ${end_in_county(filing_location.county)} state's attorney address"**](https://www.google.com/search?q=${filing_location.county}+county+illinois+state%27s+attorney%27s+office) on the internet. 
+  You can find this address by clicking on [**"Illinois ${end_in_county(filing_location.county)} state's attorney address"**](https://www.google.com/search?q=${filing_location.county}+county+illinois+state%27s+attorney%27s+office) to search for it on the internet. 
   
   If you do not know this now, you can add it to your forms later. You will need to add the State's Attorney's address before you file your forms.
 fields:
@@ -1246,9 +1252,10 @@ code: |
   nested_cap = 0
   for person in convictions:
     if nested_cap <= 6:
-      if person.other_name_check == False:
-        alternate_names_list.append(person.alternate_name)
-        nested_cap += 1
+      if person.qualified == True:
+        if person.other_name_check == False:
+          alternate_names_list.append(person.alternate_name)
+          nested_cap += 1
   list_those_names = True
 ---
 reconsider: True
@@ -1509,6 +1516,7 @@ attachment:
   pdf template file: CXP_Notice_of_Court_Date_for_Motion.pdf
   fields:
       - "filing_county_without_county": ${filing_location.county.upper()}
+      - "filing_county_without_county_lower": ${filing_location.county}
       - "user_name": ${users[0].name.full(middle='full')}
       - "fee_waiver": ${fee_waiver_check}
       - "additional_names": ${comma_and_list(alternate_names_list.complete_elements().full_names())}
