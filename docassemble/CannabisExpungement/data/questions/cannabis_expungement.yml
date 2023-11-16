@@ -1066,7 +1066,7 @@ id: states attorney address
 question: |
   What is the address of ${end_in_county(filing_location.county)}'s State's Attorney?
 subquestion: |
-  You can find this address by clicking on [**"Illinois ${end_in_county(filing_location.county)} state's attorney address"**](https://www.google.com/search?q=${filing_location.county}+county+illinois+state%27s+attorney%27s+office) to search for it using Google. 
+  You should be able to find this address on the Internet. Click [**Illinois ${end_in_county(filing_location.county)} state's attorney address**](https://www.google.com/search?q=${filing_location.county}+county+illinois+state%27s+attorney%27s+office) to search for it using Google.
   
   If you do not know this now, you can add it to your forms later. You will need to add the State's Attorney's address before you file your forms.
 fields:
@@ -1136,8 +1136,8 @@ fields:
       - Native Hawaiian: Native Hawaiian
       - North African: North African
       - Pacific Islander: Pacific Islander
-      - 2 or more races: Multiracial
       - White: White
+      - 2 or more races: Multiracial
       - Other: Other
   - Other: users[0].other_race
     maxlength: 20
@@ -1350,7 +1350,7 @@ subquestion: |
 
   ${ al_user_bundle.send_button_html(show_editable_checkbox=False) }
   
-  **Note:** This program does not send your forms. You will need to do this yourself.
+  **Note:** This program does not file your forms. You will need to do this yourself.
 
   Thank you for using ILAO Easy Forms!
 under: |
@@ -2003,7 +2003,7 @@ review:
   - Edit: x.same_case_check
     button: |
       **Were you convicted of any additional counts in the same case?**
-      ${x.same_case_check}
+      ${word(yesno(x.same_case_check))}
   - Edit: x.probation_check
     button: |
       **Did you receive Court Supervision or Qualified Probation?**
