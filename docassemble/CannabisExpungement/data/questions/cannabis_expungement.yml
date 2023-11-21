@@ -276,7 +276,7 @@ continue button field: about_expungement
 question: |
   About cannabis expungement
 subquestion: |
-  Some cannabis convictions from before before June 25, 2019, in the state of Illinois can be expunged. To ‘expunge’ means to erase the police and court records of the conviction.
+  Some cannabis convictions from before June 25, 2019, in the state of Illinois can be expunged. To ‘expunge’ means to erase the police and court records of the conviction.
 
   Some cannabis offenses are eligible for automatic expungement. Other cannabis convictions are eligible to be vacated and expunged. To vacate the cannabis conviction means to set aside the finding of guilt, as if it did not happen. To vacate and expunge an eligible cannabis conviction, a person must file a motion with the court.
 
@@ -328,7 +328,7 @@ subject: |
 content: |
   **Court Dispositions**
 
-  You can get court dispositions for your court cases from the courthouse. Ask the Circuit Clerk for copies of the court dispositions. You may be able to use the courthouse's public computer to look them up. There may be a fee to get copies or print out your court dispositions. Find your [**Circuit Clerk's website**](www.illinoiscourts.gov/courts/circuit-court/circuit-court-clerks/).
+  You can get court dispositions for your court cases from the courthouse. Ask the Circuit Clerk for copies of the court dispositions. You may be able to use the courthouse's public computer to look them up. There may be a fee to get copies or print out your court dispositions. Find your [**Circuit Clerk's website**](https://www.illinoiscourts.gov/courts/circuit-court/circuit-court-clerks/).
 
   **Illinois State Police RAP Sheet**
 
@@ -362,11 +362,11 @@ continue button field: eligibility
 question: |
   Eligibility
 subquestion: |
-  Not all cannabis convictions can be expunged using these forms. Only Misdemeanor and Class 4 felony convictions for Sections 4 and 5 of the [**Cannabis Control Act**](www.ilga.gov/legislation/ilcs/ilcs3.asp?ActID=1937&ChapterID=53) are eligible.
+  Not all cannabis convictions can be expunged using these forms. Only misdemeanor and Class 4 felony convictions for Sections 4 and 5 of the [**Cannabis Control Act**](https://www.ilga.gov/legislation/ilcs/ilcs3.asp?ActID=1937&ChapterID=53) are eligible.
   
    ${collapse_template(which_convictions_qualify)}
 
-  For any other cannabis-related convictions, you may be able to use the [**Criminal Record Expungement or Sealing program**](www.illinoislegalaid.org/legal-information/criminal-record-expungement-or-sealing-request).
+  For any other cannabis-related convictions, you may be able to use the [**Criminal Record Expungement or Sealing program**](https://www.illinoislegalaid.org/legal-information/criminal-record-expungement-or-sealing-request).
 ---
 template: which_convictions_qualify
 subject: |
@@ -377,7 +377,7 @@ content: |
   * **Possession of Cannabis** (all dates before 6/25/19), 500 grams or less
   * **Attempted Possession of Cannabis** (between 8/15/97 and 6/24/19), 2000 grams or less
   * **Attempted Possession of Cannabis** (prior to 8/15/97), Any amount
-  * **Manufacture /  Delivery of Cannabis** (between 9/24/83 and 6/24/19) ,30 grams or less
+  * **Manufacture / Delivery of Cannabis** (between 9/24/83 and 6/24/19) ,30 grams or less
   * **Attempted Manufacture / Delivery of Cannabis** (between 9/24/83 and 6/24/19), 500 grams or less
 ---
 id: more eligibility
@@ -387,7 +387,15 @@ question: |
 subquestion: |
   If you have been convicted of Trafficking (Section 5.1) or Delivery of Cannabis on School Grounds (Section 5.2) you are not eligible to vacate and expunge those records.
 
-  However, they may be eligible for expungement using the regular petition process.
+  However, they may be eligible for expungement using the regular petition process.
+  
+  You **can not** use this program to expunge the records of a case where:
+  
+  * You were found not guilty,
+  * The case was dismissed,
+  * You were arrested but were never changed with a crime,
+  * You were pardoned by the governor, or
+  * The court cancelled or reversed your conviction.
 
   Use the [**Criminal records expungement or sealing request**](https://www.illinoislegalaid.org/legal-information/criminal-record-expungement-or-sealing-request) for those records.
 ---
@@ -528,6 +536,10 @@ subquestion: |
 id: any probation check
 question: |
   Did you receive Court Supervision or Qualified Probation for your ${convictions[i].date} conviction?
+subquestion: |
+  Qualified probation may also be called 410, 710, 1410, or TASC probation. 
+  
+  A court may give out qualified probation if it determines the arrest was a result of drug addiction. The court disposition will say if you got this type of probation.
 fields:
   - no label: convictions[i].probation_check
     datatype: yesnoradio
@@ -625,7 +637,7 @@ id: conviction case number
 question: |
   What is the court case number of your ${convictions[i].date} conviction?
 subquestion: |
-  If there is a municipal case number, you should enter that as well. Not all cases will have a municipal case number
+  If there is a municipal case number, you should enter that as well. Not all cases will have a municipal case number.
   
   % if convictions[i].type == "felony":
   The municipal number usually has the same Central Booking (CB) number as the felony case.
@@ -1108,7 +1120,9 @@ continue button field: fee_waiver_info
 question: |
   Fee waiver
 subquestion: |
-  You can use ILAO's [**Fee waiver Easy Form**](www.illinoislegalaid.org/legal-information/fee-waiver) to fill out your fee waiver.
+  You can use ILAO's [**Fee waiver Easy Form**](https://www.illinoislegalaid.org/legal-information/fee-waiver) to fill out your fee waiver.
+  
+  You should submit your request for fee waiver with your cannabis expungement forms.
 ---
 id: user birthdate
 question: |
@@ -1245,7 +1259,7 @@ content: |
   Here are some examples:
 
   * I applied for a job in the cannabis industry and I was denied my Agent Identification Card because of my criminal record.
-  * I received an offer for a job position, however, after the criminal background check was done the offer was rescinded because of my criminal record.
+  * I received an offer for a job position, but after a criminal background check the offer was rescinded because of my criminal record.
   
   **If you have been denied housing due to your criminal record**, it is important for the court to know specific examples where you have been denied housing. Helpful information can include the approximate date of denial, location/name of building, and how it affected you. Here is an example:
 
@@ -1622,6 +1636,10 @@ attachment:
       - "case_number_sixteen": ${qualified_convictions[15].number_for_form}
       - "case_number_seventeen": ${qualified_convictions[16].number_for_form}
       - "case_number_eighteen": ${qualified_convictions[17].number_for_form}
+      - "user_address_one": ${ users[0].address.line_one(bare=True)}
+      - "user_address_two": ${users[0].address.line_two()}
+      - "user_phone": ${phone_number_formatted(users[0].phone_number)}
+      - "user_email": ${users[0].email if users[0].has_email_address == True else ""}
 ---
 attachment:
   variable name: additional_convictions[i]
