@@ -276,7 +276,7 @@ continue button field: about_expungement
 question: |
   About cannabis expungement
 subquestion: |
-  Some cannabis convictions from before June 25, 2019, in the state of Illinois can be expunged. To ‘expunge’ means to erase the police and court records of the conviction.
+  Some cannabis convictions in Illinois from before June 25, 2019 can be expunged.  To ‘expunge’ means to erase the police and court records of the conviction.
 
   To vacate the cannabis conviction means to set aside the finding of guilt, as if it did not happen. To vacate and expunge an eligible cannabis conviction, a person must file a motion with the court.
 
@@ -1253,7 +1253,7 @@ subquestion: |
 
   ${collapse_template(opportunities_help)}
   
-  The form has space for about 24 lines of text, or about 1,350 characters.
+  The form has space for about 24 lines of text, or about 1,350 characters. If you need more space, write it down and attach it to your Motion.
 fields:
   - Missed opportunities: missed_opportunities
     input type: area
