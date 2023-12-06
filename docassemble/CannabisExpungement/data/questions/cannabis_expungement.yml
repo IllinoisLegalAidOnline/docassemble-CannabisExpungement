@@ -278,9 +278,9 @@ question: |
 subquestion: |
   Some cannabis convictions from before June 25, 2019, in the state of Illinois can be expunged. To ‘expunge’ means to erase the police and court records of the conviction.
 
-  Some cannabis offenses are eligible for automatic expungement. Other cannabis convictions are eligible to be vacated and expunged. To vacate the cannabis conviction means to set aside the finding of guilt, as if it did not happen. To vacate and expunge an eligible cannabis conviction, a person must file a motion with the court.
+  To vacate the cannabis conviction means to set aside the finding of guilt, as if it did not happen. To vacate and expunge an eligible cannabis conviction, a person must file a motion with the court.
 
-  This program will create a *Motion to Vacate & Expunge Eligible Cannabis Convictions* that will include any of your eligible cannabis convictions.
+  This program will create a *Motion to Vacate & Expunge Eligible Cannabis Convictions* that will include any of your eligible cannabis convictions. If you have any non-eligible convictions or arrests that did not end in conviction, you may be able to expunge them using ILAO's [**Criminal record expungement Easy Form**](https://www.illinoislegalaid.org/legal-information/criminal-record-expungement-or-sealing-request).
   
   To learn more about the types of cannabis convictions that can be expunged, read ILAO's article about [**clearing cannabis convictions from a criminal record**](https://www.illinoislegalaid.org/new-leaf/weed-legal-now-can-i-clear-my-record).
 ---
@@ -301,11 +301,11 @@ subquestion: |
  
   ${ collapse_template(help_example) }  
 
-  Click on **{green words}** to learn what they mean. Some questions have a question mark in a circle ${ fa_icon("question-circle", color_css="#0dcaf0" ) } that also gives help.
+  Click on **{green words}** to learn what they mean. Some pages have a question mark in a circle ${ fa_icon("question-circle", color_css="#0dcaf0" ) } that helps explain things.
 ---
 template: help_example
 subject: |
-  **You can expand sections like this to show more information.**
+  **You can click sections like this to show more information.**
 content: |  
   This is an example of help. Click again to hide.
 ---
@@ -334,7 +334,7 @@ content: |
 
   You can get an Illinois State Police RAP sheet to make sure you know all your arrests, charges, and convictions. You will need to complete a request form and pay a fee. There may be a waiting period before you get your information.
 
-  Find conviction information request forms at the [**Illinois State Police website**](isp.illinois.gov/BureauOfIdentification/MyRecord) or by contacting:
+  Find conviction information request forms at the [**Illinois State Police website**](https://isp.illinois.gov/BureauOfIdentification/MyRecord) or by contacting:
 
   Illinois State Police   
   Bureau of Identification   
@@ -383,7 +383,7 @@ content: |
 id: more eligibility
 continue button field: more_eligibility
 question: |
-  Ineligible convictions
+  About other convictions
 subquestion: |
   If you have been convicted of Trafficking (Section 5.1) or Delivery of Cannabis on School Grounds (Section 5.2) you are not eligible to vacate and expunge those records.
 
@@ -403,7 +403,7 @@ id: filing county
 question: |
   Which county are you filing your motion in?
 subquestion: |
-  You need to file in the county that issued your conviction.
+  You need to file in the county where you were convicted.
   
   ${collapse_template(multiple_counties)}
 fields:
@@ -419,11 +419,11 @@ validation code: |
 #Could we change this? Could Docassemble handle multiple counties?
 template: multiple_counties
 subject: |
-  **What if I have convictions in multiple counties?**
+  **What if I have convictions in more than one county?**
 content: |
   While this program creates a *Motion to Vacate & Expunge* that can expunge more than one conviction, they must be from the same county.
   
-  If you have convictions in multiple countries, you will have to use this program multiple times. 
+  If you have convictions in more than one county, you will have to use this program more than once. 
 ---
 code: |
   filing_location.trial_court_index
@@ -454,9 +454,9 @@ content: |
 id: invalid type disqualification
 continue button field: convictions[i].invalid_type_dq
 question: |
-  ${convictions[i].date} conviction ineligible
+  ${convictions[i].date} conviction cannot be expunged with this program
 subquestion: |
-  Only misdemeanor cannabis offenses and class 4 felony cannabis offenses are eligible to be expunged.
+  Only misdemeanor cannabis offenses and class 4 felony cannabis offenses can be expunged with this program. You may be able to expunge other offenses using ILAO's [**Criminal record expungement Easy Form**](https://www.illinoislegalaid.org/legal-information/criminal-record-expungement-or-sealing-request).
   
   You can talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
   
@@ -473,9 +473,9 @@ continue button field: convictions_intro
 question: |
   Convictions
 subquestion: |
-  The next screens will ask about your cannabis convictions. They will check if the convictions are eligible and ask for some details about them. This program will include all the eligible convictions in your forms.
+  The next screens will ask about your cannabis convictions. They will check if the convictions are eligible and ask for some details about them.
   
-  Some cannabis convictions may not be eligible for this program, but may be expungeable another way.  You may want to consult a lawyer about those convictions. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area. 
+  This program might not work for some cannabis convictions, but there might be other ways to clear them from your record. You may want to talk to a lawyer about these convictions. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area. 
 ---
 id: max conviction note
 continue button field: max_conviction_note
@@ -517,7 +517,7 @@ fields:
 id: same case multiple convictions disqualification
 continue button field: convictions[i].same_case_dq
 question: |
-  ${convictions[i].date} conviction ineligible
+  ${convictions[i].date} conviction cannot be expunged with this program
 subquestion: |
   Since you were convicted in the same case on a separate count that is not eligible to be vacated, the court will not vacate and expunge this conviction.
   
@@ -575,7 +575,7 @@ fields:
 id: conditions disqualification
 continue button field: convictions[i].conditions_dq
 question: |
-  ${convictions[i].date} conviction ineligible
+  ${convictions[i].date} conviction cannot be expunged with this program
 subquestion: |
   A conviction cannot be expunged if you have not completed all conditions for it.
   
@@ -592,7 +592,7 @@ subquestion: |
 id: active sentence disqualfication
 continue button field: convictions[i].sentence_dq
 question: |
-  ${convictions[i].date} conviction ineligible
+  ${convictions[i].date} conviction cannot be expunged with this program
 subquestion: |
   A conviction cannot be expunged if you are still serving your sentence for it.
   
@@ -659,7 +659,7 @@ template: case_number_help
 subject: |
   **Where can I find this?**
 content: |
-  The case number can be found on your RAP sheet.
+  The case number can be found on your RAP sheet. It might also be in the court record or in an ISP report.
 
   The Municipal case number ("muni #") is not always listed on the RAP sheet or ISP report. Some cases do not have municipal numbers. The court disposition for the felony case might show the municipal number as the “related case.” Ask the Circuit Clerk how to find this information or use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find a lawyer.
   
@@ -707,7 +707,7 @@ fields:
 ---
 template: multiple_names_help
 subject: |
-  **What if I was convicted under a name other than my current name?**
+  **What if I was convicted under a different name?**
 content: |
   For this question, you should enter your current legal name.
   
@@ -1022,6 +1022,8 @@ choices:
       * Steger
       * Thornton  
   - George N. Leighton Criminal Court Building, 2600 S. California Avenue, Chicago: 22
+    help: |
+      The George N. Leighton Criminal Court is a Circuit Court of Cook County's County Department Criminal Division.
 ---
  #  if cook_district == 15:
  #    court_house_address = "Daley Center, 50 W. Washington Street, Chicago, IL 60602"
@@ -1111,6 +1113,10 @@ fields:
 id: fee waiver check
 question: |
   Do you want to ask the court clerk to waive your fees?
+subquestion: |
+  Courts often ask that you pay money when you file forms. However, you have the option to request that the court not make you pay fees. You can use ILAO's [**Fee waiver Easy Form**](https://www.illinoislegalaid.org/legal-information/fee-waiver) to fill out your fee waiver request.
+  
+  If you click **Yes**, you will have to include a fee waiver request with your cannabis expungement forms. 
 fields:
   - no label: fee_waiver_check
     datatype: yesnoradio
@@ -1120,9 +1126,9 @@ continue button field: fee_waiver_info
 question: |
   Fee waiver
 subquestion: |
-  You can use ILAO's [**Fee waiver Easy Form**](https://www.illinoislegalaid.org/legal-information/fee-waiver) to fill out your fee waiver.
+  You can use ILAO's [**Fee waiver Easy Form**](https://www.illinoislegalaid.org/legal-information/fee-waiver) to fill out your fee waiver request.
   
-  You should submit your request for fee waiver with your cannabis expungement forms.
+  You should include your request for fee waiver with your cannabis expungement forms when you file them with the court.
 ---
 id: user birthdate
 question: |
@@ -1243,6 +1249,8 @@ id: missed opportunities
 question: |
   What opportunities have you missed because of your cannabis conviction records?
 subquestion: |
+  This is where you can write about how your criminal record and cannabis convictions have hurt you. If you have been denied a job or housing, you can mention that here.
+
   ${collapse_template(opportunities_help)}
   
   The form has space for about 24 lines of text, or about 1,350 characters.
@@ -1356,6 +1364,8 @@ subquestion: |
   
   The Instructions page has important information. You can read it to find out what to do next.
   
+  If you have cannabis convictions in another county, you can restart this program to make additional forms for them after downloading these forms.
+  
   ${ action_button_html(url_action('review_answers'), label=':edit: Make changes', color='success', size="md") }
 
   ${ al_user_bundle.download_list_html() }
@@ -1364,7 +1374,7 @@ subquestion: |
 
   ${ al_user_bundle.send_button_html(show_editable_checkbox=False) }
   
-  **Note:** This program does not file your forms. You will need to do this yourself.
+  **Note:** This program does **not** file your forms. You will need to do this yourself.
 
   Thank you for using ILAO Easy Forms!
 under: |
