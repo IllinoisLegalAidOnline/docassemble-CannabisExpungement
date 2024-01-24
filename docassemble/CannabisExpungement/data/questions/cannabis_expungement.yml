@@ -85,15 +85,15 @@ code: |
   nav.set_section('section_notice')
   set_progress(40)
   providing_notice
-  if hearing_date_check == True:
-    hearing_date
-    hearing_courtroom
+  #if hearing_date_check == True:
+  #  hearing_date
+  #  hearing_courtroom
   set_progress(60)
   
   states_attorney_address.address
   
   nav.set_section('section_filing')
-  new_number_check
+  #new_number_check
   if fee_waiver_check == True:
     fee_waiver_info
   
@@ -276,7 +276,7 @@ continue button field: about_expungement
 question: |
   About cannabis expungement
 subquestion: |
-  Some cannabis convictions in Illinois from before June 25, 2019 can be expunged.  To ‘expunge’ means to erase the police and court records of the conviction.
+  Some cannabis convictions in Illinois from before June 25, 2019 can be vacated and expunged. To ‘expunge’ means to erase the police and court records of the conviction.
 
   To vacate the cannabis conviction means to set aside the finding of guilt, as if it did not happen. To vacate and expunge an eligible cannabis conviction, a person must file a motion with the court.
 
@@ -289,11 +289,20 @@ continue button field: how_to_use
 question: |
   Instructions
 subquestion: |
-  To use this program you will need: 
+  To expunge a conviction with this program you will need to know the:
+  
+  * Arrest Date,
+  * Arresting Agency,
+  * Case Number,
+  * Charge,
+  * Outcome, and
+  * Date of conviction
+    
+  This information may be found on:
 
-  * Court Dispositions for all of your criminal cases,
-  * Your Illinois State Police RAP Sheet, and
-  * If you had arrests or charges in Chicago, your Chicago Police RAP Sheet.
+  * Court Dispositions,
+  * Your Illinois State Police RAP Sheet, or
+  * Your Chicago Police RAP Sheet.
   
   ${collapse_template(find_information_help)}
   
@@ -362,7 +371,7 @@ continue button field: eligibility
 question: |
   Eligibility
 subquestion: |
-  Not all cannabis convictions can be expunged using these forms. Only misdemeanor and Class 4 felony convictions for Sections 4 and 5 of the [**Cannabis Control Act**](https://www.ilga.gov/legislation/ilcs/ilcs3.asp?ActID=1937&ChapterID=53) are eligible.
+  Not all cannabis convictions can be vacated and expunged using these forms. Only misdemeanor and Class 4 felony convictions for Sections 4 and 5 of the [**Cannabis Control Act**](https://www.ilga.gov/legislation/ilcs/ilcs3.asp?ActID=1937&ChapterID=53) are eligible.
   
    ${collapse_template(which_convictions_qualify)}
 
@@ -395,7 +404,7 @@ subquestion: |
   * The case was dismissed,
   * You were arrested but were never changed with a crime,
   * You were pardoned by the governor, or
-  * The court cancelled or reversed your conviction.
+  * The court reversed your conviction.
 
   Use the [**Criminal records expungement or sealing request**](https://www.illinoislegalaid.org/legal-information/criminal-record-expungement-or-sealing-request) for those records.
 ---
@@ -446,7 +455,7 @@ subject: |
 content: |
   Look at your court dispositions and RAP sheets for "Type" and "Class" of the offense.
 
-  * An 'F' under Type means the offense was a felony. An 'M' means the offense was a misdemeanor.
+  * An 'F' under Type means the offense was charged as a felony. An 'M' means the offense was charged as a misdemeanor.
   * If it was a felony, the number under Class refers to the class of felony.
   
   [FILE ClassAndType.png]
@@ -475,7 +484,7 @@ question: |
 subquestion: |
   The next screens will ask about your cannabis convictions. They will check if the convictions are eligible and ask for some details about them.
   
-  This program might not work for some cannabis convictions, but there might be other ways to clear them from your record. You may want to talk to a lawyer about these convictions. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area. 
+  This program will only work for convictions it finds eligible. Even if this program says a conviction is not eligible, there might be other ways to remove it from your record. You may want to talk to a lawyer about expungement. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area. 
 ---
 id: max conviction note
 continue button field: max_conviction_note
@@ -494,6 +503,8 @@ question: |
 subquestion: |
   Only convictions before June 25, 2019 can be expunged using this program.
   
+  If you were convicted before you were 17 years old, you cannot use this program to expunge that conviction. You can use ILAO's [**Expunge juvenile records**](https://www.illinoislegalaid.org/legal-information/expunge-juvenile-records) to expunge juvenile convictions.
+  
   % if i > 0:
   So far you have entered information for convictions on these dates: ${comma_and_list(convictions.complete_elements().full_names())}.
   % endif
@@ -501,7 +512,7 @@ fields:
   - Date: convictions[i].date
     datatype: date
     max: '6/24/2019'
-    min: '1/1/1901'
+    min: ${users[0].birthdate.plus(years=17)}
 ---
 id: same case multiple convictions check
 question: |
@@ -539,7 +550,7 @@ question: |
 subquestion: |
   Qualified probation may also be called 410, 710, 1410, or TASC probation. 
   
-  A court may give out qualified probation if it determines the arrest was a result of drug addiction. The court disposition will say if you got this type of probation.
+  A court may issue out this type of probation for a first offense. A court might also do so for an arrest related to substance abuse. The court disposition will say if you got this type of probation.
 fields:
   - no label: convictions[i].probation_check
     datatype: yesnoradio
@@ -561,11 +572,13 @@ fields:
 #The wording of this question seems off? This is how it was phrased in A2J, but shouldn't it be "conditions of your release" or something similar?
 id: conditions check
 question: |
-  Have you completed all conditions of your ${convictions[i].date} conviction?
+  Have you completed the sentence for your ${convictions[i].date} conviction?
 subquestion: |
   Some sentences of probation or conditional discharge may require you to complete additional conditions before your sentence is discharged.
 
   For example, you may have been ordered to do community service, undergo treatment or counseling, or be monitored.
+  
+  If you are still on parole or supervised release, you should answer **No** to this question.
 fields:
   - no label: convictions[i].conditions_check
     datatype: yesnoradio
@@ -630,26 +643,29 @@ question: |
 subquestion: |
   The ${convictions[i].date} conviction is eligible to be expunged using this form.
 
-  **Note:** even though this conviction is eligible to be expunged, it is still up to the judge to decide if it will be.
+  **Note:** even though this conviction is eligible to be vacated and expunged, it is still up to the judge to decide if it will be.
 ---
 #Where does the municipal case number get used in the LHI verison?
 id: conviction case number
 question: |
   What is the court case number of your ${convictions[i].date} conviction?
 subquestion: |
+  % if end_in_county(filing_location.county).lower() == "cook county":
   If there is a municipal case number, you should enter that as well. Not all cases will have a municipal case number.
   
   % if convictions[i].type == "felony":
-  The municipal number usually has the same Central Booking (CB) number as the felony case.
+  The municipal number usually has the same booking number as the felony case.
   % else:
-  The municipal number usually has the same Central Booking (CB) number as the misdemeanor case.
+  The municipal number usually has the same booking number as the misdemeanor case.
   % endif
   
+  % endif
   ${collapse_template(case_number_help)}
 fields:
   - Case number: convictions[i].case_number
     maxlength: 20
   - Municipal number: convictions[i].municipal_number
+    show if: end_in_county(filing_location.county).lower() == "cook county"
     maxlength: 20
     help: |
       Not all cases have a municipal number.
@@ -659,9 +675,11 @@ template: case_number_help
 subject: |
   **Where can I find this?**
 content: |
-  The case number can be found on your RAP sheet. It might also be in the court record or in an ISP report.
-
-  The Municipal case number ("muni #") is not always listed on the RAP sheet or ISP report. Some cases do not have municipal numbers. The court disposition for the felony case might show the municipal number as the “related case.” Ask the Circuit Clerk how to find this information or use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find a lawyer.
+  The case number may be found on your RAP sheet or ISP report. It might also be in the court record or in an ISP report.
+  % if end_in_county(filing_location.county).lower() == "cook county":
+  
+  The Municipal case number ("muni #") is not always listed on the RAP sheet or ISP report, but it will be in the court records. Some cases do not have municipal numbers. The court disposition for the felony case might show the municipal number as the “related case.” Ask the Circuit Clerk how to find this information or use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find a lawyer.  
+  % endif
   
   [FILE CaseNumber.png]
 ---
@@ -676,7 +694,7 @@ fields:
   - Arrest date: convictions[i].arrest_date
     datatype: date
     max: ${convictions[i].date}
-    min: '1/1/1901'
+    min: ${users[0].birthdate.plus(years=17)}
   - Agency: convictions[i].agency
     maxlength: 35
     help: |
@@ -817,29 +835,29 @@ subquestion: |
 
   The court clerk will deliver a copy of your *Motion* and the *Notice* to the State's Attorney.
 ---
-id: hearing date check
-question: |
-  Do you have a court hearing scheduled to expunge these convictions?
-field: hearing_date_check
-choices:
-  - Yes: True
-  - No, I do not yet have a hearing scheduled.: False 
----
-id: hearing date time
-question: |
-  When and where is your court hearing?
-fields:
-  - Date: hearing_date
-    datatype: date
-    min: ${ today().format("yyyy-MM-dd") }
-    max: ${ today().plus(years=2) }
-  - Time: hearing_time
-    datatype: time
-  - note: |
-      If you have not been assigned a courtroom yet, you can leave this next field blank.
-  - Courtroom: hearing_courtroom
-    required: False
-    maxlength: 20
+#id: hearing date check
+#question: |
+#  Do you have a court hearing scheduled to expunge these convictions?
+#field: hearing_date_check
+#choices:
+#  - Yes: True
+#  - No, I do not yet have a hearing scheduled.: False 
+#---
+#id: hearing date time
+#question: |
+#  When and where is your court hearing?
+#fields:
+#  - Date: hearing_date
+#    datatype: date
+#    min: ${ today().format("yyyy-MM-dd") }
+#    max: ${ today().plus(years=2) }
+#  - Time: hearing_time
+#    datatype: time
+#  - note: |
+#      If you have not been assigned a courtroom yet, you can leave this next field blank.
+#  - Courtroom: hearing_courtroom
+#    required: False
+#    maxlength: 20
 ---
 id: cook county courthouse
 question: |
@@ -1023,7 +1041,7 @@ choices:
       * Thornton  
   - George N. Leighton Criminal Court Building, 2600 S. California Avenue, Chicago: 22
     help: |
-      The George N. Leighton Criminal Court is a Circuit Court of Cook County's County Department Criminal Division.
+      The George N. Leighton Criminal Court is the Circuit Court of Cook County's County Department Criminal Division. It covers the **City of Chicago**.
 ---
  #  if cook_district == 15:
  #    court_house_address = "Daley Center, 50 W. Washington Street, Chicago, IL 60602"
@@ -1098,17 +1116,17 @@ fields:
   - ZIP code: states_attorney_address.zip
     required: False
 ---
-id: new case number
-question: |
-  Did the clerk give you a new case number for this expungement case?
-fields:
-  - no label: new_number_check
-    datatype: yesnoradio
-  - New case number: new_case_number
-    show if: 
-      variable: new_number_check
-      is: True
-    maxlength: 20
+#id: new case number
+#question: |
+#  Did the clerk give you a new case number for this expungement case?
+#fields:
+#  - no label: new_number_check
+#    datatype: yesnoradio
+#  - New case number: new_case_number
+#    show if: 
+#      variable: new_number_check
+#      is: True
+#    maxlength: 20
 ---
 id: fee waiver check
 question: |
@@ -1451,7 +1469,7 @@ attachment:
       - "filing_county_without_county": ${filing_location.county.upper()}
       - "user_name": ${users[0].name.full(middle='full')}
       - "additional_names": ${comma_and_list(alternate_names_list.complete_elements().full_names())}
-      - "new_case_number": ${new_case_number if new_number_check == True else ""}
+      - "new_case_number": ${""}
       - "user_birth": ${users[0].birthdate}
       - "user_race": ${users[0].other_race if users[0].race == "Other" else users[0].race}
       - "user_gender": ${users[0].other_gender if users[0].gender == "Other" else users[0].gender}
@@ -1576,7 +1594,7 @@ attachment:
       - "user_name": ${users[0].name.full(middle='full')}
       - "fee_waiver": ${fee_waiver_check}
       - "additional_names": ${comma_and_list(alternate_names_list.complete_elements().full_names())}
-      - "new_case_number": ${new_case_number if new_number_check == True else ""}
+      - "new_case_number": ${""}
       - "user_birth": ${users[0].birthdate}
       - "user_race": ${users[0].other_race if users[0].race == "Other" else users[0].race}
       - "user_gender": ${users[0].other_gender if users[0].gender == "Other" else users[0].gender}
@@ -1600,11 +1618,11 @@ attachment:
       - "case_number_seventeen": ${qualified_convictions[16].number_for_form}
       - "case_number_eighteen": ${qualified_convictions[17].number_for_form}
       - "additional_convictions": ${True if qualified_count_check > 18 else False}
-      - "hearing_date": ${hearing_date if hearing_date_check == True else ""}
-      - "hearing_time": ${format_time(hearing_time, format='h:mm') if hearing_date_check == True else "" }
-      - "hearing_am": ${True if format_time(hearing_time, format='a')=='AM' else False}
-      - "hearing_pm": ${True if format_time(hearing_time, format='a')=='PM' else False}
-      - "hearing_courtroom": ${ hearing_courtroom if hearing_date_check == True else "" }
+      - "hearing_date": ${""}
+      - "hearing_time": ${"" }
+      - "hearing_am": ${False}
+      - "hearing_pm": ${False}
+      - "hearing_courtroom": ${"" }
       - "hearing_address":  ${court_house_address}
       - "e_signature": ${ users[0].name.full(middle='full') if e_signature == True else ""}
       - "signature_date": ${ today() if e_signature == True else ""}
@@ -1624,7 +1642,7 @@ attachment:
       - "filing_county_without_county": ${filing_location.county.upper()}
       - "user_name": ${users[0].name.full(middle='full')}
       - "additional_names": ${comma_and_list(alternate_names_list.complete_elements().full_names())}
-      - "new_case_number": ${new_case_number if new_number_check == True else ""}
+      - "new_case_number": ${""}
       - "user_birth": ${users[0].birthdate}
       - "user_race": ${users[0].other_race if users[0].race == "Other" else users[0].race}
       - "user_gender": ${users[0].other_gender if users[0].gender == "Other" else users[0].gender}
@@ -1662,7 +1680,7 @@ attachment:
       - "filing_county_without_county": ${filing_location.county.upper()}
       - "user_name": ${users[0].name.full(middle='full')}
       - "additional_names": ${comma_and_list(alternate_names_list.complete_elements().full_names())}
-      - "new_case_number": ${new_case_number if new_number_check == True else ""}
+      - "new_case_number": ${""}
       - "user_birth": ${users[0].birthdate}
       - "user_race": ${users[0].other_race if users[0].race == "Other" else users[0].race}
       - "user_gender": ${users[0].other_gender if users[0].gender == "Other" else users[0].gender}
@@ -1775,7 +1793,7 @@ attachment:
       - "filing_county_without_county": ${filing_location.county.upper()}
       - "user_name": ${users[0].name.full(middle='full')}
       - "additional_names": ${comma_and_list(alternate_names_list.complete_elements().full_names())}
-      - "new_case_number": ${new_case_number if new_number_check == True else ""}
+      - "new_case_number": ${""}
       - "user_birth": ${users[0].birthdate}
       - "user_race": ${users[0].other_race if users[0].race == "Other" else users[0].race}
       - "user_gender": ${users[0].other_gender if users[0].gender == "Other" else users[0].gender}
@@ -1809,7 +1827,7 @@ attachment:
       - "filing_county_without_county": ${filing_location.county.upper()}
       - "user_name": ${users[0].name.full(middle='full')}
       - "additional_names": ${comma_and_list(alternate_names_list.complete_elements().full_names())}
-      - "new_case_number": ${new_case_number if new_number_check == True else ""}
+      - "new_case_number": ${""}
       - "user_birth": ${users[0].birthdate}
       - "user_race": ${users[0].other_race if users[0].race == "Other" else users[0].race}
       - "user_gender": ${users[0].other_gender if users[0].gender == "Other" else users[0].gender}
@@ -1854,15 +1872,15 @@ review:
       % for my_var in convictions:
         * Conviction date: ${ my_var.date }
       % endfor
-  - Edit: hearing_date_check
-    button: |
-      **Do you know when your hearing date is?**
-      ${word(yesno(hearing_date_check))}
-  - Edit: hearing_date
-    button: |
-      **Court date:**
-      ${hearing_date}, ${hearing_time}
-    show if: hearing_date_check
+ # - Edit: hearing_date_check
+ #   button: |
+ #     **Do you know when your hearing date is?**
+ #     ${word(yesno(hearing_date_check))}
+ # - Edit: hearing_date
+ #   button: |
+ #     **Court date:**
+ #     ${hearing_date}, ${hearing_time}
+ #   show if: hearing_date_check
   - Edit: cook_district
     button: |
       **Which Cook County courthouse will you file in?**
@@ -1881,16 +1899,16 @@ review:
       % elif cook_district == "22":
       George N. Leighton Criminal Court Building, 2600 S. California Avenue, Chicago
       % endif
-    show if: filing_location.county == "Cook"
-  - Edit: hearing_courtroom
-    button: |
-      **Hearing courtroom:**
-      % if hearing_courtroom != "":
-      ${hearing_courtroom}
-      % else:
-      Not entered
-      % endif
-    show if: hearing_date_check
+    show if: end_in_county(filing_location.county).lower() == "cook county"
+  #- Edit: hearing_courtroom
+  #  button: |
+  #    **Hearing courtroom:**
+  #    % if hearing_courtroom != "":
+  #    ${hearing_courtroom}
+  #    % else:
+  #    Not entered
+  #    % endif
+  #  show if: hearing_date_check
   - Edit: states_attorney_address.address
     button: |
       **State's Attorney's Address:**
@@ -1899,14 +1917,14 @@ review:
       % else:
       ${states_attorney_address.on_one_line(bare=True)}
       % endif
-  - Edit: new_number_check
-    button: |
-      **Did the clerk give you a new case number?**
-      % if new_number_check == True:
-      Yes, it is ${new_case_number}
-      % else:
-      No
-      % endif
+  #- Edit: new_number_check
+  #  button: |
+  #    **Did the clerk give you a new case number?**
+  #    % if new_number_check == True:
+  #    Yes, it is ${new_case_number}
+  #    % else:
+  #    No
+  #    % endif
   - Edit: fee_waiver_check
     button: |
       **Do you want to ask the court clerk to waive your fees?**
@@ -2100,6 +2118,25 @@ review:
     button: |
       **Which county are you filing your motion in?**
       ${end_in_county(filing_location.county)}
+  - Edit: cook_district
+    button: |
+      **Which Cook County courthouse will you file in?**
+      % if cook_district == "15":
+      First Municipal District, Daley Center, 50 W. Washington Street, Chicago:
+      % elif cook_district == "16":
+      Second Municipal District, 5600 Old Orchard Road, Skokie
+      % elif cook_district == "17":
+      Third Municipal District, 2121 Euclid Avenue, Rolling Meadows
+      % elif cook_district == "18":
+      Fourth Municipal District, 1500 Maybrook Drive, Maywood
+      % elif cook_district == "19":
+      Fifth Municipal District, 10220 S. 76th Avenue, Bridgeview
+      % elif cook_district == "20":
+      Sixth Municipal District, 16501 South Kedzie Parkway, Markham
+      % elif cook_district == "22":
+      George N. Leighton Criminal Court Building, 2600 S. California Avenue, Chicago
+      % endif
+    show if: end_in_county(filing_location.county).lower() == "cook county"
   - Edit: convictions.revisit
     button: |
       **Convictions: (Edit to change case numbers, dates, and types)**
@@ -2121,15 +2158,15 @@ question: |
 subquestion: |
   Edit your answers below.
 review:
-  - Edit: hearing_date_check
-    button: |
-      **Do you know when your hearing date is?**
-      ${word(yesno(hearing_date_check))}
-  - Edit: hearing_date
-    button: |
-      **Court date:**
-      ${hearing_date}, ${hearing_time}
-    show if: hearing_date_check
+  #- Edit: hearing_date_check
+  #  button: |
+  #    **Do you know when your hearing date is?**
+  #    ${word(yesno(hearing_date_check))}
+  #- Edit: hearing_date
+  #  button: |
+  #    **Court date:**
+  #    ${hearing_date}, ${hearing_time}
+  #  show if: hearing_date_check
   - Edit: cook_district
     button: |
       **Which Cook County courthouse will you file in?**
@@ -2148,16 +2185,16 @@ review:
       % elif cook_district == "22":
       George N. Leighton Criminal Court Building, 2600 S. California Avenue, Chicago
       % endif
-    show if: filing_location.county == "Cook"
-  - Edit: hearing_courtroom
-    button: |
-      **Hearing courtroom:**
-      % if hearing_courtroom != "":
-      ${hearing_courtroom}
-      % else:
-      Not entered
-      % endif
-    show if: hearing_date_check
+    show if: end_in_county(filing_location.county).lower() == "cook county"
+  #- Edit: hearing_courtroom
+  #  button: |
+  #    **Hearing courtroom:**
+  #    % if hearing_courtroom != "":
+  #    ${hearing_courtroom}
+  #    % else:
+  #    Not entered
+  #    % endif
+  #  show if: hearing_date_check
   - Edit: states_attorney_address.address
     button: |
       **State's Attorney's Address:**
@@ -2175,14 +2212,14 @@ question: |
 subquestion: |
   Edit your answers below.
 review:
-  - Edit: new_number_check
-    button: |
-      **Did the clerk give you a new case number?**
-      % if new_number_check == True:
-      Yes, it is ${new_case_number}
-      % else:
-      No
-      % endif
+  #- Edit: new_number_check
+  #  button: |
+  #    **Did the clerk give you a new case number?**
+  #    % if new_number_check == True:
+  #    Yes, it is ${new_case_number}
+  #    % else:
+  #    No
+  #    % endif
   - Edit: fee_waiver_check
     button: |
       **Do you want to ask the court clerk to waive your fees?**
