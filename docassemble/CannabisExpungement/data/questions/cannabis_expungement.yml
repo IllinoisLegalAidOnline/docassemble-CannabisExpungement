@@ -54,7 +54,8 @@ code: |
   about_expungement
   eligibility
   more_eligibility
-  users[0].name.first  
+  users[0].name.first 
+  users[0].birthdate
   
   nav.set_section('section_conviction')
   set_progress(20)
@@ -457,6 +458,7 @@ content: |
 
   * An 'F' under Type means the offense was charged as a felony. An 'M' means the offense was charged as a misdemeanor.
   * If it was a felony, the number under Class refers to the class of felony.
+  * If it was a misdemeanor, the Class of the offense does not matter for this question.
   
   [FILE ClassAndType.png]
 ---
@@ -1154,7 +1156,7 @@ question: |
 fields:
   - Date of birth: users[0].birthdate
     datatype: BirthDate
-    alMax: '6/25/2010'
+    alMax: '6/25/2002'
 ---
 id: user race
 question: |
@@ -1212,7 +1214,7 @@ template: intersex_trans_help
 subject: |
   **What if I am intersex or transgender?**
 content: |
-  DEVELOPER NOTE: Consult a SME on this subject. Does the answer need to correspond to the gender listed on the arrest or conviction? On the form of id the user will use at the hearing?
+  The gender on your expungement forms does not need to match the gender on your arrest records, conviction records, or current ID.
 ---
 id: user address
 question: |
@@ -2110,6 +2112,10 @@ review:
     button: |
       **Your name:**
       ${users[0].name.full(middle='full')}
+  - Edit: users[0].birthdate
+    button: |
+      **Your birthdate:**
+      ${users[0].birthdate}
   - label: Edit
     fields:
       - filing_location.trial_court_index
