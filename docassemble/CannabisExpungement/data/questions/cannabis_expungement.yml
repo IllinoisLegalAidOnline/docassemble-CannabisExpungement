@@ -277,7 +277,7 @@ continue button field: about_expungement
 question: |
   About cannabis expungement
 subquestion: |
-  Some cannabis convictions in Illinois from before June 25, 2019 can be vacated and expunged. To ‘expunge’ means to erase the police and court records of the conviction.
+  Some cannabis convictions in Illinois from before June 25, 2019 (the day Illinois legalized cannabis) can be vacated and expunged. To 'expunge' means to erase the police and court records of the conviction.
 
   To vacate the cannabis conviction means to set aside the finding of guilt, as if it did not happen. To vacate and expunge an eligible cannabis conviction, a person must file a motion with the court.
 
@@ -372,7 +372,7 @@ continue button field: eligibility
 question: |
   Eligibility
 subquestion: |
-  Not all cannabis convictions can be vacated and expunged using these forms. Only misdemeanor and Class 4 felony convictions for Sections 4 and 5 of the [**Cannabis Control Act**](https://www.ilga.gov/legislation/ilcs/ilcs3.asp?ActID=1937&ChapterID=53) are eligible.
+  Not all cannabis convictions can be vacated and expunged using these forms. Only misdemeanor and Class 4 felony convictions for Sections 4 (possession) and 5 (delivery) of the [**Cannabis Control Act**](https://www.ilga.gov/legislation/ilcs/ilcs3.asp?ActID=1937&ChapterID=53) are eligible.
   
    ${collapse_template(which_convictions_qualify)}
 
@@ -550,9 +550,9 @@ id: any probation check
 question: |
   Did you receive Court Supervision or Qualified Probation for your ${convictions[i].date} conviction?
 subquestion: |
-  Qualified probation may also be called 410, 710, 1410, or TASC probation. 
+  Qualified probation may also be called 410, 710, 1410, or TASC probation.
   
-  A court may issue out this type of probation for a first offense. A court might also do so for an arrest related to substance abuse. The court disposition will say if you got this type of probation.
+  A court may sentence a person to supervision or qualified probation if it was a first offense. It could sentence a person to TASC probation if the arrest was related to substance abuse. The court disposition will say if you got this type of probation.
 fields:
   - no label: convictions[i].probation_check
     datatype: yesnoradio
@@ -578,7 +578,7 @@ question: |
 subquestion: |
   Some sentences of probation or conditional discharge may require you to complete additional conditions before your sentence is discharged.
 
-  For example, you may have been ordered to do community service, undergo treatment or counseling, or be monitored.
+  For example, you may have been ordered to do community service, undergo treatment or counseling, or be monitored. This chould include a sentence of parole or Mandatory Supervised Release (MSR) as well.
   
   If you are still on parole or supervised release, you should answer **No** to this question.
 fields:
@@ -643,7 +643,7 @@ continue button field: convictions[i].conviction_eligible
 question: |
   Good news!
 subquestion: |
-  The ${convictions[i].date} conviction is eligible to be expunged using this form.
+  The ${convictions[i].date} conviction is eligible to be vacated and expunged using this form.
 
   **Note:** even though this conviction is eligible to be vacated and expunged, it is still up to the judge to decide if it will be.
 ---
@@ -677,7 +677,7 @@ template: case_number_help
 subject: |
   **Where can I find this?**
 content: |
-  The case number may be found on your RAP sheet or ISP report. It might also be in the court record or in an ISP report.
+  The case number may be found on your RAP sheet or ISP report, or court record.
   % if end_in_county(filing_location.county).lower() == "cook county":
   
   The Municipal case number ("muni #") is not always listed on the RAP sheet or ISP report, but it will be in the court records. Some cases do not have municipal numbers. The court disposition for the felony case might show the municipal number as the “related case.” Ask the Circuit Clerk how to find this information or use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find a lawyer.  
@@ -863,11 +863,11 @@ subquestion: |
 ---
 id: cook county courthouse
 question: |
-  Which Cook County courthouse will you file in?
+  Which Cook County district were you convicted in?
 subquestion: |
-  You can file your forms in any Cook County location.
+  You should file your forms in the same courthouse where you were convicted.
 
-  The Daley Center and the George N. Leighton Criminal Court Building have the most experience with expunging cannabis convictions.
+  If you were convicted in more than one district, you will need to run this program more than once.
   
   ${collapse_template(cook_district_help)}
 field: cook_district
@@ -1191,7 +1191,9 @@ template: why_enter_race
 subject: |
   **Why do I need to enter my race?**
 content: |
-  The state of Illinois uses race for identification purposes.
+  Agencies like the Illinois State Police use race to make sure they match the right records with the right person.
+  
+  If your arrest or conviction documents list a race for you, you may want to select that race here.
 ---
 #Does this need to correspond to the gender listed on the arrest or conviction? On the form of id the user will use at the hearing? Question for a SME
 id: user gender
@@ -1216,7 +1218,11 @@ template: intersex_trans_help
 subject: |
   **What if I am intersex or transgender?**
 content: |
-  The gender on your expungement forms does not need to match the gender on your arrest records, conviction records, or current ID.
+  Agencies like the Illinois State Police use gender to make sure they match the right records with the right person.
+  
+  If your arrest or conviction lists a gender for you, you may want to select that gender here. If you have transitioned genders or your gender presentation has changed, you may need to explain that to the court.
+
+  You do not have to select the gender on your ID.
 ---
 id: user address
 question: |
