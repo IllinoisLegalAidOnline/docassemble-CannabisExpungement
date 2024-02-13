@@ -576,9 +576,9 @@ id: conditions check
 question: |
   Have you completed the sentence for your ${convictions[i].date} conviction?
 subquestion: |
-  Some sentences of probation or conditional discharge may require you to complete additional conditions before your sentence is discharged.
+  Some sentences of probation or conditional discharge may require you to complete additional conditions before your sentence is discharged. This chould include a sentence of parole or Mandatory Supervised Release (MSR) as well.
 
-  For example, you may have been ordered to do community service, undergo treatment or counseling, or be monitored. This chould include a sentence of parole or Mandatory Supervised Release (MSR) as well.
+  For example, you may have been ordered to do community service, undergo treatment or counseling, or be monitored. 
   
   If you are still on parole or supervised release, you should answer **No** to this question.
 fields:
@@ -677,7 +677,7 @@ template: case_number_help
 subject: |
   **Where can I find this?**
 content: |
-  The case number may be found on your RAP sheet or ISP report, or court record.
+  The case number may be found on your RAP sheet, ISP report, or court records.
   % if end_in_county(filing_location.county).lower() == "cook county":
   
   The Municipal case number ("muni #") is not always listed on the RAP sheet or ISP report, but it will be in the court records. Some cases do not have municipal numbers. The court disposition for the felony case might show the municipal number as the “related case.” Ask the Circuit Clerk how to find this information or use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find a lawyer.  
@@ -865,7 +865,7 @@ id: cook county courthouse
 question: |
   Which Cook County district were you convicted in?
 subquestion: |
-  You should file your forms in the same courthouse where you were convicted.
+  If you were convicted in Chicago, you can file in the Daley Center or at the George N. Leighton Criminal Court Building. Otherwise, you should file your forms in the same courthouse where you were convicted.
 
   If you were convicted in more than one district, you will need to run this program more than once.
   
@@ -1220,7 +1220,7 @@ subject: |
 content: |
   Agencies like the Illinois State Police use gender to make sure they match the right records with the right person.
   
-  If your arrest or conviction lists a gender for you, you may want to select that gender here. If you have transitioned genders or your gender presentation has changed, you may need to explain that to the court.
+  If your arrest or conviction documents list a gender for you, you may want to select that gender here. If you have transitioned genders or your gender presentation has changed, you may need to explain that to the court.
 
   You do not have to select the gender on your ID.
 ---
