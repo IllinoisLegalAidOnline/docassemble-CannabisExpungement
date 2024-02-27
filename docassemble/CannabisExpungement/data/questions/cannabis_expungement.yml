@@ -124,7 +124,11 @@ code: |
   #if qualified_count_check < 3:
   convictions[i].date
   #After asking for the conviction date, the program goes through questions checking that the conviction qualifies for expungement. Each line that ends in "_dq" is pulling up a continue button field and then going to the "there_is_another" question.
-  if convictions[i].type == "other":
+  #jump to
+  if convictions[i].arrest_date != users[0].birthdate.plus(years=17) and date_difference(starting=users[0].birthdate, ending=convictions[i].arrest_date).years < 17:
+    convictions[i].juvenile_arrest_dq
+  
+  elif convictions[i].type == "other":
     convictions[i].invalid_type_dq
 
   elif convictions[i].same_case_check == True:
@@ -147,7 +151,7 @@ code: |
       convictions[i].case_number 
       convictions[i].arrest_date
 
-  #Per the above comment, this is the other path branch that is largely the same as the first, it just has one fewer qualification question to ask. Any change made to the gather loop's interview path may need to be made twice as a result. My apologies. Maybe I will smooth this out.
+  #Per the above comment, this is the other path branch that is largely the same as the first, it just has on  e fewer qualification question to ask. Any change made to the gather loop's interview path may need to be made twice as a result. My apologies. Maybe I will smooth this out.
   elif convictions[i].sentence_check == True:
     convictions[i].sentence_dq
 
@@ -158,7 +162,7 @@ code: |
     #Path B's post-qualification questions
     convictions[i].conviction_eligible
     convictions[i].case_number 
-    convictions[i].arrest_date
+    
 
   #This seciton of the gather code block deals with alternate names. Currently, due to template space, the program only allows for six alternate names.
   if i < 6:
@@ -227,26 +231,30 @@ depends on:
   - convictions[i].probation_complete
   - convictions[i].sentence_check
   - convictions[i].conditions_check
+  - convictions[i].arrest_date
+  - users[0].birthdate
 code: |
-    if convictions[i].type == "other":
+  if convictions[i].arrest_date != users[0].birthdate.plus(years=17) and date_difference(starting=users[0].birthdate, ending=convictions[i].arrest_date).years < 17:
+    convictions[i].qualified = False
+  elif convictions[i].type == "other":
+    convictions[i].qualified = False
+  elif convictions[i].same_case_check == True:
+    convictions[i].qualified = False
+  elif convictions[i].probation_check == True:
+    if convictions[i].probation_complete == True:
       convictions[i].qualified = False
-    elif convictions[i].same_case_check == True:
-      convictions[i].qualified = False
-    elif convictions[i].probation_check == True:
-      if convictions[i].probation_complete == True:
-        convictions[i].qualified = False
-      elif convictions[i].sentence_check == True:
-        convictions[i].qualified = False
-      elif convictions[i].conditions_check == False:
-        convictions[i].qualified = False
-      else:
-        convictions[i].qualified = True
     elif convictions[i].sentence_check == True:
       convictions[i].qualified = False
     elif convictions[i].conditions_check == False:
       convictions[i].qualified = False
     else:
       convictions[i].qualified = True
+  elif convictions[i].sentence_check == True:
+    convictions[i].qualified = False
+  elif convictions[i].conditions_check == False:
+    convictions[i].qualified = False
+  else:
+    convictions[i].qualified = True
 ---
 #This is known as a list comprehension. It creates a list that is just every item in another list that meets a given condition. qualifed_convictions is created here; it has the same contents as the convictions list except it does not include convictions that cannot be expunged. The qualified_convictions list is used in the template. reconsider must be set to True to ensure that the qualified_convictions list will be updated if the convictions list is changed. filter_out_those_convictions is just a variable used to activate this code block.
 reconsider: True
@@ -505,7 +513,7 @@ question: |
 subquestion: |
   Only convictions before June 25, 2019 can be expunged using this program.
   
-  If you were convicted before you were 17 years old, you cannot use this program to expunge that conviction. You can use ILAO's [**Expunge juvenile records**](https://www.illinoislegalaid.org/legal-information/expunge-juvenile-records) to expunge juvenile convictions.
+  If you were convicted before you were 17 years old, you cannot use this program to expunge that conviction. You can use ILAO's [**Expunge juvenile records Easy Form**](https://www.illinoislegalaid.org/legal-information/expunge-juvenile-records) to expunge juvenile convictions.
   
   % if i > 0:
   So far you have entered information for convictions on these dates: ${comma_and_list(convictions.complete_elements().full_names())}.
@@ -706,11 +714,12 @@ fields:
     maxlength: 35
     help: |
       This is the law enforcement agency that arrested you. This is often a police department. 
-validation code: |
-  if date_difference(starting=users[0].birthdate, ending=convictions[i].arrest_date).years < 17:
-    #For some reason a conviction date on a user's 17th birthday triggers the above if statement, so I added the below if statement in case a user was convicted on their 17th birthday.
-    if convictions[i].arrest_date != users[0].birthdate.plus(years=17):
-      validation_error(word("Based on the birth date you entered, you were under 17 years old on this date. You cannot expunge juvenile convictions using this program."), field="convictions[i].arrest_date")
+#This validation code was replaced with logic leading to a soft kickout in the conviction gather loop.
+#validation code: |
+#  if date_difference(starting=users[0].birthdate, ending=convictions[i].arrest_date).years < 17:
+#    #For some reason a conviction date on a user's 17th birthday triggers the above if statement, so I added the below if statement in case a user was convicted on their 17th birthday.
+#    if convictions[i].arrest_date != users[0].birthdate.plus(years=17):
+#      validation_error(word("Based on the birth date you entered, you were under 17 years old on this date. You cannot expunge juvenile convictions using this program."), field="convictions[i].arrest_date")
 ---
 template: find_agency
 subject: |
@@ -719,6 +728,24 @@ content: |
   This can be found on your RAP sheet.
   
   [FILE ArrestingAgency.png]
+---
+id: juvenile arrest dq
+continue button field: convictions[i].juvenile_arrest_dq
+question: |
+  ${convictions[i].date} conviction cannot be expunged with this program
+subquestion: |
+  If you were arrested before you were 17 years old, any convictions from that arrest are juvenile convictions. You cannot use this program to expunge a juvenile conviction. You can use ILAO's [**Expunge juvenile records Easy Form**](https://www.illinoislegalaid.org/legal-information/expunge-juvenile-records) to expunge juvenile convictions.
+  
+  You can talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
+  
+  % if i == 0:
+  Click **Back** if you made a mistake. Click **Next** if you would like to expunge a different conviction.
+  % elif i == 1:
+  Click **Back** if you made a mistake. Click **Next** if you would like to expunge another conviction or expunge the conviction you have already entered.
+  % else:
+  Click **Back** if you made a mistake. Click **Next** if you would like to expunge another conviction or expunge the convictions you have already entered.
+  % endif
+
 ---
 id: user name
 question:  |
