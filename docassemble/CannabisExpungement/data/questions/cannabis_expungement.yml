@@ -734,7 +734,7 @@ continue button field: convictions[i].juvenile_arrest_dq
 question: |
   ${convictions[i].date} conviction cannot be expunged with this program
 subquestion: |
-  If you were arrested before you were 17 years old, any cannabis convictions from that arrest are juvenile convictions. You cannot use this program to expunge a juvenile conviction. You can use ILAO's [**Expunge juvenile records Easy Form**](https://www.illinoislegalaid.org/legal-information/expunge-juvenile-records) to expunge juvenile records.
+  You entered an arrest date from before you were 17 years old. This program cannot expunge juvenile arrests or juvenile court records. You can use ILAO's [**Expunge juvenile records Easy Form**](https://www.illinoislegalaid.org/legal-information/expunge-juvenile-records) to expunge juvenile records.
   
   You can talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
   
