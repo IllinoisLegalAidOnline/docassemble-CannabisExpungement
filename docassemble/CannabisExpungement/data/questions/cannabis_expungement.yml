@@ -47,6 +47,7 @@ mandatory: True
 code: |
   nav.set_section('section_intro')
   sees_nav_bar
+  snapshot_start
   how_to_use
   #docs_needed
   accept_terms
@@ -116,7 +117,42 @@ code: |
   set_progress(100)
   list_those_names
   #counting_is_fun
+  more_than_one_conviction
+  forms_assembling
+  snapshot_forms
   get_docs_screen
+---
+code: |
+  stuff_to_snapshot = {
+  	'start_time': str(current_datetime().format_datetime()),
+  	'started_interview': True, 
+  	}
+    
+  stuff_to_snapshot['user_zip'] = showifdef('users[0].address.zip')
+
+  stuff_to_snapshot['downloaded_forms'] = showifdef('forms_assembling')
+  
+  stuff_to_snapshot['more_than_one_conviction'] = showifdef('more_than_one_conviction') 
+  
+  store_variables_snapshot(
+  	data=stuff_to_snapshot, persistent=True
+  	)
+  snapshot_interview_state = True
+---
+reconsider: True
+code: |
+  if convictions.number_gathered() > 1:
+    more_than_one_conviction = True
+  else:
+    more_than_one_conviction = False
+---
+code: |
+  snapshot_interview_state
+  snapshot_start = True  
+---
+code: |
+  reconsider('snapshot_interview_state')
+  snapshot_forms = True
 ---
 #This is the convictions gather code block
 code: |
@@ -1418,6 +1454,17 @@ code: |
       person.number_for_form += ", Muni: "
       person.number_for_form += person.municipal_number
   a_little_more_logic = True
+---
+id: forms assembling
+continue button field: forms_assembling
+question: |
+  Almost done
+subquestion: |
+  After you click **Next**, it may take a few moments to finish making your forms.
+  
+  ###### You do not need to refresh your screen. Hang in there!
+  
+  [NEWLINE]
 ---
 id: get docs screen
 event: get_docs_screen
