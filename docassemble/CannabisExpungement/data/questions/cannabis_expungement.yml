@@ -2085,7 +2085,7 @@ columns:
 delete buttons: True
 confirm: True
 ---
-id: conviction review
+id: conviction review screen
 continue button field: x.review_conviction
 generic object: ALIndividual
 question: |
@@ -2161,7 +2161,7 @@ review:
       **Have you completed all conditions of your offense?**
       ${word(yesno(x.conditions_check))}
 ---
-id: convictions review
+id: convictions review screen
 continue button field: convictions.revisit
 question: |
   Edit the information about the convictions
@@ -2192,7 +2192,7 @@ code: |
 #${ convictions.add_action() } 
 ---
 section: Conviction info
-id: review convictions
+id: convictions review screen
 event: section_conviction
 question: |
   Conviction info
@@ -2248,7 +2248,7 @@ review:
       ${missed_opportunities}
 ---
 section: Notice
-id: review notice
+id: notice review screen
 event: section_notice
 question: |
   Notice
@@ -2302,7 +2302,7 @@ review:
       % endif
 ---
 section: Filing
-id: review filing
+id: filing review screen
 event: section_filing
 question: |
   Filing
@@ -2323,7 +2323,7 @@ review:
       ${word(yesno(fee_waiver_check))}
 ---
 section: About you
-id: review user
+id: user review screen
 event: section_about_you
 question: |
   Filing
