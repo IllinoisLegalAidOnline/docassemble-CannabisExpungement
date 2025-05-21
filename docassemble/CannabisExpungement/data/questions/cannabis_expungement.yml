@@ -222,6 +222,7 @@ code: |
       name_count_iteration += 1
     #This if statement asks if there is an alternate name if the user hasn't already entered 6 alternate names. The corresponding else statement tells the user they have already entered as many names as the program will accept.
     if convictions[name_count_iteration].qualified == True:
+      make_partial_list
       if quick_name_count < 6:
         if convictions[i].other_name_check == False:
           convictions[i].alternate_name.name.first
@@ -1410,6 +1411,7 @@ code: |
 #This is similar to the code generated alternate_names_list. The difference is that this uses a while loop instead of a for loop so it can be run before the convictions list is fully gathered. I'm not certain both are necessary; I see no reason why this block couldn't also be used to generate the list of alternate names for the forms. OH! There is one issue with this one that the other one doesn't have; if a user is able to list more than six alternate names through review screen chicanery, partial_name_list can list more than 6 names but alternate_names_list will only list the first six alternate names. That could most certainly be addressed here as well, but for now I will let sleeping dogs lie.
 reconsider: True
 code: |
+  #may_2025_debug
   partial_name_list.clear()
   quick_counter_ceiling = convictions.number_gathered()
   quick_counter_ceiling -= 1
@@ -1417,9 +1419,14 @@ code: |
   while quick_counter < quick_counter_ceiling:
     if convictions[quick_counter].qualified == True:
       if convictions[quick_counter].other_name_check == False:
-        partial_name_list.append(convictions[i].alternate_name)
+        partial_name_list.append(convictions[quick_counter].alternate_name)
         quick_counter += 1
   make_partial_list = True
+---
+id: may 21 25
+continue button field: may_2025_debug
+question: |
+  The code block is called
 ---
 #This code block runs at the end of the interview, generating variables used in the templates.
 reconsider: True
