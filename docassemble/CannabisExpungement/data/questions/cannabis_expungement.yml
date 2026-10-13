@@ -18,10 +18,8 @@ objects:
   - convictions: ALPeopleList.using(object_type=ALIndividual, complete_attribute='complete', there_are_any=True)
   - convictions[i].alternate_name: ALIndividual
   - states_attorney_address: ALAddress
-  - court_list: ALCourtLoader.using(file_name='docassemble.ILAO:data/sources/il_courts.xlsx')
   - alternate_names_list: ALPeopleList.using(object_type=ALIndividual, there_is_another=False)
   - partial_name_list: ALPeopleList.using(object_type=ALIndividual, there_is_another=False)
-  - court_house_address: DAObject
   - qualified_convictions: ALPeopleList.using(object_type=ALIndividual, complete_attribute='complete', there_are_any=True, there_is_another=False)
 ---
 code: |
@@ -37,7 +35,6 @@ code: |
 sections:
   - section_intro: Start
   - section_conviction: Conviction info
-  - section_notice: Notice
   - section_filing: Filing
   - section_about_you: About you
   - section_download: Download  
@@ -60,18 +57,14 @@ code: |
   users[0].name.first 
   users[0].birthdate
   set_progress(20)
-  if filing_location.county == "Cook":
-    cook_district
+  filing_location.county
+
   alternate_name_list_starts_false
   convictions_intro
   convictions.gather()
   
-  nav.set_section('section_notice')
-  set_progress(40)
-  providing_notice
   set_progress(60)
   
-  states_attorney_address.address
   
   nav.set_section('section_filing')
   if fee_waiver_check == True:
@@ -90,7 +83,6 @@ code: |
   nav.set_section('section_download')
   filter_out_those_convictions
   a_little_more_logic
-  court_house_address
   set_progress(100)
   list_those_names
   #counting_is_fun
@@ -297,7 +289,7 @@ subquestion: |
   
   The forms you make with this program can only be used in Illinois.
   
-  To learn more, read ILAO's article about [**expunging cannabis offenses**](https://www.illinoislegalaid.org/legal-information/i-have-cannabis-arrest-or-conviction).
+  To learn more, see ILAO's article about [**cannabis legalization and expungement**](https://www.illinoislegalaid.org/node/180146).
 field: sees_nav_bar
 ---
 id: about expungement
@@ -309,9 +301,9 @@ subquestion: |
 
   To vacate the cannabis conviction means to set aside the finding of guilt, as if it did not happen. To vacate and expunge an eligible cannabis conviction, a person must file a motion with the court.
 
-  This program will create a *Motion to Vacate & Expunge Eligible Cannabis Convictions* that will include any of your eligible cannabis convictions. If you have any non-eligible convictions or arrests that did not end in conviction, you may be able to expunge them using ILAO's [**Criminal record expungement Easy Form**](https://www.illinoislegalaid.org/legal-information/criminal-record-expungement-or-sealing-request).
+  This program will create a *Motion to Vacate & Expunge Eligible Cannabis Convictions* that will include any of your eligible cannabis convictions. If you have any non-eligible convictions or arrests that did not end in conviction, you may be able to expunge them using ILAO's [**Expunge or seal criminal records Easy Form**](https://www.illinoislegalaid.org/node/30976).
   
-  To learn more about the types of cannabis convictions that can be expunged, read ILAO's article about [**clearing cannabis convictions from a criminal record**](https://www.illinoislegalaid.org/new-leaf/weed-legal-now-can-i-clear-my-record).
+  To learn more about the types of cannabis convictions that can be expunged, see ILAO's article about [**clearing cannabis convictions from a criminal record**](https://www.illinoislegalaid.org/node/165861).
 ---
 id: instructions
 continue button field: how_to_use
@@ -378,7 +370,7 @@ content: |
   Bureau of Identification   
   260 North Chicago Street   
   Joliet, Illinois 60432   
-  (815) 740-5160   
+  <a href="tel:815-740-5160">**(815) 740-5160 :phone:**</a>
 
   **Chicago Police RAP Sheet**
 
@@ -389,11 +381,11 @@ content: |
   Chicago Police Headquarters  
   3510 S. Michigan Ave.  
   Chicago, Illinois 60653  
-  (312) 745-5508  
+  <a href="tel:312-745-5508">**(312) 745-5508 :phone:**</a>
 
   Ask for a copy of your Illinois State Police Statewide Criminal History Transcript. The Chicago Police will provide your state record at no extra cost.
 
-  To learn more, read ILAO's article about [**how to get copies of your criminal records**](https://www.illinoislegalaid.org/legal-information/how-get-copies-your-criminal-records).
+  To learn more, read ILAO's article about [**getting copies of your criminal records**](https://www.illinoislegalaid.org/node/37511).
 ---
 id: eligibility
 continue button field: eligibility
@@ -404,7 +396,7 @@ subquestion: |
   
    ${collapse_template(which_convictions_qualify)}
 
-  For any other cannabis-related convictions, you may be able to use the [**Criminal Record Expungement or Sealing program**](https://www.illinoislegalaid.org/legal-information/criminal-record-expungement-or-sealing-request).
+  For any other cannabis-related convictions, you may be able to use the [**Expunge or seal criminal records Easy Form**](https://www.illinoislegalaid.org/node/30976).
 ---
 template: which_convictions_qualify
 subject: |
@@ -415,7 +407,7 @@ content: |
   * **Possession of Cannabis** (all dates before 6/25/19), 500 grams or less
   * **Attempted Possession of Cannabis** (between 8/15/97 and 6/24/19), 2000 grams or less
   * **Attempted Possession of Cannabis** (prior to 8/15/97), Any amount
-  * **Manufacture / Delivery of Cannabis** (between 9/24/83 and 6/24/19) ,30 grams or less
+  * **Manufacture / Delivery of Cannabis** (between 9/24/83 and 6/24/19), 60 grams or less
   * **Attempted Manufacture / Delivery of Cannabis** (between 9/24/83 and 6/24/19), 500 grams or less
 ---
 id: more eligibility
@@ -435,7 +427,7 @@ subquestion: |
   * You were pardoned by the governor, or
   * The court reversed your conviction.
 
-  Use the [**Criminal records expungement or sealing request**](https://www.illinoislegalaid.org/legal-information/criminal-record-expungement-or-sealing-request) for those records.
+  Use the [**Expunge or seal criminal records Easy Form**](https://www.illinoislegalaid.org/node/30976) for those records.
 ---
 id: filing county
 question: |
@@ -445,14 +437,9 @@ subquestion: |
   
   ${collapse_template(multiple_counties)}
 fields:
-  - County: filing_location.trial_court_index
+  - County: filing_location.county
     code: |
-      ilao_court_county_lookup(court_list)
-validation code: |
-  if filing_location.trial_court_index == "-1":
-    trial_court = court_list.as_court('trial_court', 15)
-  else:
-    trial_court = court_list.as_court('trial_court', filing_location.trial_court_index)
+      il_county_list
 ---
 #Could we change this? Could Docassemble handle multiple counties?
 template: multiple_counties
@@ -462,10 +449,6 @@ content: |
   While this program creates a *Motion to Vacate & Expunge* that can expunge more than one conviction, they must be from the same county.
   
   If you have convictions in more than one county, you will have to use this program more than once to create forms for each county. 
----
-code: |
-  filing_location.trial_court_index
-  filing_location.county = trial_court.address.county
 ---
 id: offense type
 question: |
@@ -495,7 +478,7 @@ continue button field: convictions[i].invalid_type_dq
 question: |
   ${convictions[i].date} conviction cannot be expunged with this program
 subquestion: |
-  Only misdemeanor cannabis offenses and class 4 felony cannabis offenses can be expunged with this program. You may be able to expunge other offenses using ILAO's [**Criminal record expungement Easy Form**](https://www.illinoislegalaid.org/legal-information/criminal-record-expungement-or-sealing-request).
+  Only misdemeanor cannabis offenses and class 4 felony cannabis offenses can be expunged with this program. You may be able to expunge other offenses using ILAO's [**Expunge or seal criminal records Easy Form**](https://www.illinoislegalaid.org/node/30976).
   
   You can talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
   
@@ -516,13 +499,6 @@ subquestion: |
   
   This program will only work for convictions it finds eligible. Even if this program says a conviction is not eligible, there might be other ways to remove it from your record. You may want to talk to a lawyer about expungement. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area. 
 ---
-#id: max conviction note
-#continue button field: max_conviction_note
-#question: |
-#  Maximum convictions
-#subquestion: |
-#  This program only creates forms to expunge 36 convictions. If you have more convictions you need to expunge, you may want to use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
----
 id: conviction date
 question: |
   % if i == 0:
@@ -533,7 +509,7 @@ question: |
 subquestion: |
   Only convictions before June 25, 2019 can be expunged using this program.
   
-  If you were convicted before you were 17 years old, you cannot use this program to expunge that conviction. You can use ILAO's [**Expunge juvenile records Easy Form**](https://www.illinoislegalaid.org/legal-information/expunge-juvenile-records) to expunge juvenile convictions.
+  If you were convicted before you were 17 years old, you cannot use this program to expunge that conviction. You can use ILAO's [**Expunge juvenile records Easy Form**](https://www.illinoislegalaid.org/node/30856) to expunge juvenile convictions.
   
   % if i > 0:
   So far you have entered information for convictions on these dates: ${comma_and_list(convictions.complete_elements().full_names())}.
@@ -544,9 +520,8 @@ fields:
     max: '6/24/2019'
     min: ${users[0].birthdate}
 validation code: |
-  if date_difference(starting=users[0].birthdate, ending=convictions[i].date).years < 17: 
-    if convictions[i].date != users[0].birthdate.plus(years=17):
-      validation_error("Based on the birth date you entered, you were under 17 years old on this date. You cannot expunge juvenile convictions using this program.", field='convictions[i].date')
+  if date_difference(starting=users[0].birthdate, ending=convictions[i].date).years < 17 and convictions[i].date != users[0].birthdate.plus(years=17):
+    validation_error("Based on the birth date you entered, you were under 17 years old on this date. You cannot expunge juvenile convictions using this program.", field='convictions[i].date')
 ---
 id: same case multiple convictions check
 question: |
@@ -554,7 +529,7 @@ question: |
 subquestion: |
   If you were also convicted in the same case on a separate count (cannabis-related or otherwise) that is not eligible to be vacated, the court will not vacate and expunge the case.
 
-  However, it may be eligible for expungement or sealing using the [**Criminal records expungement Easy Form**](https://www.illinoislegalaid.org/legal-information/criminal-record-expungement-or-sealing-request).
+  However, it may be eligible for expungement or sealing using the [**Expunge or seal criminal records Easy Form**](https://www.illinoislegalaid.org/node/30976).
 fields:
   - no label: convictions[i].same_case_check
     datatype: yesnoradio
@@ -566,7 +541,7 @@ question: |
 subquestion: |
   Since you were convicted in the same case on a separate count that is not eligible to be vacated, the court will not vacate and expunge this conviction.
   
-  However, it may be eligible for expungement or sealing using the [**Criminal records expungement Easy Form**](https://www.illinoislegalaid.org/legal-information/criminal-record-expungement-or-sealing-request).
+  However, it may be eligible for expungement or sealing using the [**Expunge or seal criminal records Easy Form**](https://www.illinoislegalaid.org/node/30976).
   
   You can talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
   
@@ -658,7 +633,7 @@ continue button field: convictions[i].probation_dq
 question: |
   The ${convictions[i].date} conviction is not eligible to be expunged.
 subquestion: |
-  If you successfully completed your Court Supervision or Qualified probation, the conviction is not eligible for a motion to vacate and expunge. However, it is eligible for expungement using the regular [**criminal records expungement request**](https://www.illinoislegalaid.org/legal-information/criminal-record-expungement-or-sealing-request).
+  If you successfully completed your Court Supervision or Qualified probation, the conviction is not eligible for a motion to vacate and expunge. However, it is eligible for expungement using the regular [**Expunge or seal criminal records Easy Form**](https://www.illinoislegalaid.org/node/30976).
   
   You can talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
   
@@ -753,7 +728,7 @@ continue button field: convictions[i].juvenile_arrest_dq
 question: |
   ${convictions[i].date} conviction cannot be expunged with this program
 subquestion: |
-  You entered an arrest date from before you were 17 years old. This program cannot expunge juvenile arrests or juvenile court records. You can use ILAO's [**Expunge juvenile records Easy Form**](https://www.illinoislegalaid.org/legal-information/expunge-juvenile-records) to expunge juvenile records.
+  You entered an arrest date from before you were 17 years old. This program cannot expunge juvenile arrests or juvenile court records. You can use ILAO's [**Expunge juvenile records Easy Form**](https://www.illinoislegalaid.org/node/30856) to expunge juvenile records.
   
   You can talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
   
@@ -873,261 +848,40 @@ fields:
   - no label: convictions.there_is_another
     datatype: yesnoradio
 ---
-id: providing notice
-continue button field: providing_notice
-question: |
-  Providing notice
-subquestion: |
-  You must tell the State's Attorney in ${end_in_county(filing_location.county)} about your *Motion* and your court hearing. This is done by a form called a *Notice of Motion to Vacate & Expunge Eligible Cannabis Convictions*.
-
-  The next questions will help fill out this *Notice*.
-
-  The court clerk will deliver a copy of your *Motion* and the *Notice* to the State's Attorney.
----
-id: cook county courthouse
-question: |
-  Which Cook County district were you convicted in?
-subquestion: |
-  If you were convicted in Chicago, you can file in the Daley Center or at the George N. Leighton Criminal Court Building. Otherwise, you should file your forms in the same courthouse where you were convicted.
-
-  If you were convicted in more than one district, you will need to run this program more than once.
-  
-  ${collapse_template(cook_district_help)}
-fields: 
-  - no label: cook_district
-    input type: radio
-    choices:
-      - First Municipal District, Daley Center, 50 W. Washington Street, Chicago: 15
-        help: |
-          The First Municipal District covers the **City of Chicago**. 
-      - Second Municipal District, 5600 Old Orchard Road, Skokie: 16
-        help: |
-          The Second Municipal District covers the **northern suburbs of Cook County**. It includes:
-          
-          * Deerfield
-          * Des Plaines
-          * Evanston
-          * Glencoe
-          * Glenview
-          * Golf
-          * Kenilworth
-          * Lincolnwood
-          * Maine (not within Rosemont)
-          * Morton Grove
-          * New Trier
-          * Niles
-          * Northbrook
-          * Northfield (not within Prospect Heights)
-          * Park Ridge
-          * Skokie
-          * Wilmette
-          * Winnetka
-          * Wheeling (within Des Plaines)
-      - Third Municipal District, 2121 Euclid Avenue, Rolling Meadows: 17
-        help: |
-          The Third Municipal District covers the **northwestern suburbs of Cook County**. It includes:
-    
-          * Arlington Heights
-          * Barrington
-          * Barrington Hills
-          * Bartlett
-          * Bensenville
-          * Buffalo Grove
-          * East Dundee
-          * Elgin
-          * Elk Grove
-          * Elk Grove Village
-          * Hanover
-          * Hanover Park
-          * Harwood Heights
-          * Hoffman Estates
-          * Inverness
-          * Leyden (within Rosemont and Schiller Park)
-          * Maine (within Rosemont)
-          * Mount Prospect
-          * Norridge
-          * Northfield (within Prospect Heights)
-          * Norwood Park (not within Chicago)
-          * Palatine
-          * Prospect Heights
-          * Rolling Meadows
-          * Roselle
-          * Rosemont
-          * Schaumburg
-          * Schiller Park
-          * South Barrington
-          * Streamwood
-          * Wheeling (not within Des Plaines)    
-      - Fourth Municipal District, 1500 Maybrook Drive, Maywood: 18
-        help: |
-          The Fourth Municipal District covers the **western suburbs of Cook County**. It includes:
-          
-          * Bellwood
-          * Berkeley
-          * Berwyn
-          * Broadview
-          * Brookfield
-          * Cicero
-          * Elmwood Park
-          * Forest Park
-          * Franklin Park
-          * Hillside
-          * La Grange Park
-          * Leyden (not within Rosemont and Schiller Park)
-          * Maywood
-          * Melrose Park
-          * Northlake
-          * North Riverside
-          * Oak Park
-          * Proviso
-          * River Forest
-          * River Grove
-          * Riverside
-          * Stone Park
-          * Westchester  
-      - Fifth Municipal District, 10220 S. 76th Avenue, Bridgeview: 19
-        help: |
-          The Fifth Municipal District covers the **southwestern suburbs of Cook County**. It includes:
-          
-          * Alsip
-          * Bedford Park
-          * Bridgeview
-          * Burbank
-          * Burr Ridge
-          * Chicago Ridge
-          * Crestwood
-          * Countryside
-          * Evergreen Park
-          * Forest View
-          * Hickory Hills
-          * Hinsdale
-          * Hodgkins
-          * Hometown
-          * Indian Head Park
-          * Justice
-          * La Grange
-          * Lemont
-          * Lyons
-          * McCook
-          * Merrionette Park
-          * Oak Forest
-          * Oak Lawn
-          * Orland Hills
-          * Orland Park
-          * Palos
-          * Palos Heights
-          * Palos Hills
-          * Palos Park
-          * Stickney
-          * Summit
-          * Tinley Park
-          * Western Springs
-          * Willow Springs
-          * Woodridge
-          * Worth
-      - Sixth Municipal District, 16501 South Kedzie Parkway, Markham: 20
-        help: |
-          The Sixth Municipal District covers the **southern suburbs of Cook County**. It includes:
-          
-          * Bloom
-          * Blue Island
-          * Bremen
-          * Burnham
-          * Calumet
-          * Calumet City
-          * Calumet Park
-          * Chicago Heights
-          * Country Club Hills
-          * Crete
-          * Dixmoor
-          * Dolton
-          * East Hazel Crest
-          * Flossmoor
-          * Ford Heights
-          * Glenwood
-          * Harvey
-          * Hazel Crest
-          * Homewood
-          * Lansing
-          * Lynwood
-          * Markham
-          * Matteson
-          * Midlothian
-          * Olympia Fields
-          * Park Forest
-          * Phoenix
-          * Posen
-          * Rich
-          * Richton Park
-          * Riverdale
-          * Robbins
-          * Sauk Village
-          * South Chicago Heights
-          * South Holland
-          * Steger
-          * Thornton  
-      - George N. Leighton Criminal Court Building, 2600 S. California Avenue, Chicago: 22
-        help: |
-          The George N. Leighton Criminal Court is the Circuit Court of Cook County's County Department Criminal Division. It covers the **City of Chicago**.
----
-template: cook_district_help
-subject: |
-  **What if I am not sure?**
-content: |  
-  Visit **[Illinois Court Help](https://www.ilcourthelp.gov/)**, or you can call or text (833) 411-1121 for assistance.
----
-#I think there is a better way to handle this.
-depends on:
-  - cook_district
-  - filing_location.trial_court_index
-code: |
-
-  if filing_location.trial_court_index == "-1":
-    trial_court = court_list.as_court('trial_court', cook_district)
-
-  else:
-    trial_court = court_list.as_court('trial_court', filing_location.trial_court_index)
-
-    
-  court_name = str(trial_court.name)
-  court_street_address = str(trial_court.address.address)
-  court_city = str(trial_court.address.city)
-  court_state = str(trial_court.address.state)
-  court_zip = str(trial_court.address.zip)
-  court_house_address = court_name + ", " + court_street_address + ", " + court_city + ", " + court_state + " " + court_zip
----
-#id: hearing courtroom
+#id: providing notice
+#continue button field: providing_notice
 #question: |
-#  What courtroom have you been assigned?
+#  Providing notice
 #subquestion: |
-#  If you have not been assigned a courtroom yet, you can leave this blank.
-#fields: 
-#  - Courtroom: hearing_courtroom
-#    required: False
+#  You must tell the State's Attorney in ${end_in_county(filing_location.county)} about your *Motion* and your court hearing. This is done by a form called a *Notice of Motion to Vacate & Expunge Eligible Cannabis Convictions*.
+#
+#  The next questions will help fill out this *Notice*.
+#
+#  The court clerk will deliver a copy of your *Motion* and the *Notice* to the State's Attorney.
 ---
 #Will need to add information for how to find this info, at least for the most populous counties.
 #Removed this text from subquestion: ${end_in_county(filing_location.county)}'s State's Attorney may be listed in this [**Directory of State's Attorneys**](https://www.ilsaap.org/pdfs/saodirectory.pdf).
-id: states attorney address
-question: |
-  What is the address of ${end_in_county(filing_location.county)}'s state's attorney?
-subquestion: | 
-  You should be able to find this address on the Internet. You can click [**Illinois ${end_in_county(filing_location.county)} State's Attorney address**](https://www.google.com/search?q=${filing_location.county}+county+illinois+state%27s+attorney%27s+office) to search for it using Google.
-  
-  If you do not know this now, you can add it to your forms later. You will need to add the State's Attorney's address before you file your forms.
-fields:
-  - Street address: states_attorney_address.address
-    address autocomplete: True
-    required: False
-  - Address line 2: states_attorney_address.unit
-    required: False
-  - City: states_attorney_address.city
-    required: False
-  - State: states_attorney_address.state
-    required: False
-    code: |
-      states_list() 
-  - ZIP code: states_attorney_address.zip
-    required: False
+#id: states attorney address
+#question: |
+#  What is the address of ${end_in_county(filing_location.county)}'s state's attorney?
+#subquestion: | 
+#  You should be able to find this address on the Internet. You can click [**Illinois ${end_in_county(filing_location.county)} State's Attorney address**](https://www.google.com/search?q=${filing_location.county}+county+illinois+state%27s+attorney%27s+office) to search for it using Google.
+#  
+#  If you do not know this now, you can add it to your forms later. You will need to add the State's Attorney's address before you file your forms.
+#fields:
+#  - Street address: states_attorney_address.address
+#    address autocomplete: True
+#    required: False
+#  - Address line 2: states_attorney_address.unit
+#    required: False
+#  - City: states_attorney_address.city
+#    required: False
+#  - State: states_attorney_address.state
+#    required: False
+#    code: |
+#      states_list() 
+#  - ZIP code: states_attorney_address.zip
+#    required: False
 ---
 #id: new case number
 #question: |
@@ -1145,7 +899,7 @@ id: fee waiver check
 question: |
   Do you want to ask the court clerk to waive your fees?
 subquestion: |
-  Courts often ask that you pay money when you file forms. However, you have the option to request that the court not make you pay fees. You can use ILAO's [**Fee waiver Easy Form**](https://www.illinoislegalaid.org/legal-information/fee-waiver) to fill out your fee waiver request.
+  Courts often ask that you pay money when you file forms. However, you have the option to request that the court not make you pay fees. You can use ILAO's [**Fee waiver Easy Form**](https://www.illinoislegalaid.org/node/30831) to fill out your fee waiver request.
   
   If you click **Yes**, you will have to include a fee waiver request with your cannabis expungement forms. 
 fields:
@@ -1157,7 +911,7 @@ continue button field: fee_waiver_info
 question: |
   Fee waiver
 subquestion: |
-  You can use ILAO's [**Fee waiver Easy Form**](https://www.illinoislegalaid.org/legal-information/fee-waiver) to fill out your fee waiver request.
+  You can use ILAO's [**Fee waiver Easy Form**](https://www.illinoislegalaid.org/node/30831) to fill out your fee waiver request.
   
   You should include your request for fee waiver with your cannabis expungement forms when you file them with the court.
 ---
@@ -1438,14 +1192,14 @@ objects:
 code: |
   instructions.enabled = True
   motion.enabled = True
-  notice.enabled = True
+  #Notice enabled is set to False because the form was removed from the suite. The other code is kept so that old answer sets can still be used.
+  notice.enabled = False
   order.enabled = True
   list_bundle.enabled = True
   additional_notice.enabled = False
   additional_order.enabled = False
   
   if qualified_count_check > 5:
-    additional_notice.enabled = True
     additional_order.enabled = True
 ---
 objects:
@@ -1539,55 +1293,55 @@ attachment:
       - "user_phone": ${phone_number_formatted(users[0].phone_number)}
       - "user_email": ${users[0].email if users[0].has_email_address == True else ""}   
 ---
-attachment:
-  variable name: notice[i]
-  name: notice
-  filename: notice
-  skip undefined: True
-  editable: False
-  pdf template file: CXP_Notice_of_Court_Date_for_Motion.pdf
-  fields:
-      - "filing_county_without_county": ${filing_location.county.upper()}
-      - "filing_county_without_county_lower": ${filing_location.county}
-      - "user_name": ${users[0].name_full()}
-      - "fee_waiver": ${fee_waiver_check}
-      - "additional_names": ${alternate_names_list.full_names()}
-      - "new_case_number": ${""}
-      - "user_birth": ${users[0].birthdate}
-      - "user_race": ${users[0].other_race if users[0].race == "Other" else users[0].race}
-      - "user_gender": ${users[0].other_gender if users[0].gender == "Other" else users[0].gender}
-      - "states_attorney_address": ${states_attorney_address.on_one_line(bare=True)}
-      - "case_number_one": ${qualified_convictions[0].number_for_form}
-      - "case_number_two": ${qualified_convictions[1].number_for_form}
-      - "case_number_three": ${qualified_convictions[2].number_for_form}
-      - "case_number_four": ${qualified_convictions[3].number_for_form}
-      - "case_number_five": ${qualified_convictions[4].number_for_form}
-      - "case_number_six": ${qualified_convictions[5].number_for_form}
-      - "case_number_seven": ${qualified_convictions[6].number_for_form}
-      - "case_number_eight": ${qualified_convictions[7].number_for_form}
-      - "case_number_nine": ${qualified_convictions[8].number_for_form}
-      - "case_number_ten": ${qualified_convictions[9].number_for_form}
-      - "case_number_eleven": ${qualified_convictions[10].number_for_form}
-      - "case_number_twelve": ${qualified_convictions[11].number_for_form}
-      - "case_number_thirteen": ${qualified_convictions[12].number_for_form}
-      - "case_number_fourteen": ${qualified_convictions[13].number_for_form}
-      - "case_number_fifteen": ${qualified_convictions[14].number_for_form}
-      - "case_number_sixteen": ${qualified_convictions[15].number_for_form}
-      - "case_number_seventeen": ${qualified_convictions[16].number_for_form}
-      - "case_number_eighteen": ${qualified_convictions[17].number_for_form}
-      - "additional_convictions": ${True if qualified_count_check > 18 else False}
-      - "hearing_date": ${""}
-      - "hearing_time": ${"" }
-      - "hearing_am": ${False}
-      - "hearing_pm": ${False}
-      - "hearing_courtroom": ${"" }
-      - "hearing_address":  ${court_house_address}
-      - "e_signature": ${ users[0].name_full() if e_signature == True else ""}
-      - "signature_date": ${ today() if e_signature == True else ""}
-      - "user_street": ${ users[0].address.line_one(bare=True)}
-      - "user_csz": ${users[0].address.line_two()}
-      - "user_phone": ${phone_number_formatted(users[0].phone_number)}
-      - "user_email": ${users[0].email if users[0].has_email_address == True else ""}
+#attachment:
+#  variable name: notice[i]
+#  name: notice
+#  filename: notice
+#  skip undefined: True
+#  editable: False
+#  pdf template file: CXP_Notice_of_Court_Date_for_Motion.pdf
+#  fields:
+#      - "filing_county_without_county": ${filing_location.county.upper()}
+#      - "filing_county_without_county_lower": ${filing_location.county}
+#      - "user_name": ${users[0].name_full()}
+#      - "fee_waiver": ${fee_waiver_check}
+#      - "additional_names": ${alternate_names_list.full_names()}
+#      - "new_case_number": ${""}
+#      - "user_birth": ${users[0].birthdate}
+#      - "user_race": ${users[0].other_race if users[0].race == "Other" else users[0].race}
+#      - "user_gender": ${users[0].other_gender if users[0].gender == "Other" else users[0].gender}
+#      - "states_attorney_address": ${states_attorney_address.on_one_line(bare=True)}
+#      - "case_number_one": ${qualified_convictions[0].number_for_form}
+#      - "case_number_two": ${qualified_convictions[1].number_for_form}
+#      - "case_number_three": ${qualified_convictions[2].number_for_form}
+#      - "case_number_four": ${qualified_convictions[3].number_for_form}
+#      - "case_number_five": ${qualified_convictions[4].number_for_form}
+#      - "case_number_six": ${qualified_convictions[5].number_for_form}
+#      - "case_number_seven": ${qualified_convictions[6].number_for_form}
+#      - "case_number_eight": ${qualified_convictions[7].number_for_form}
+#      - "case_number_nine": ${qualified_convictions[8].number_for_form}
+#      - "case_number_ten": ${qualified_convictions[9].number_for_form}
+#      - "case_number_eleven": ${qualified_convictions[10].number_for_form}
+#      - "case_number_twelve": ${qualified_convictions[11].number_for_form}
+#      - "case_number_thirteen": ${qualified_convictions[12].number_for_form}
+#      - "case_number_fourteen": ${qualified_convictions[13].number_for_form}
+#      - "case_number_fifteen": ${qualified_convictions[14].number_for_form}
+#      - "case_number_sixteen": ${qualified_convictions[15].number_for_form}
+#      - "case_number_seventeen": ${qualified_convictions[16].number_for_form}
+#      - "case_number_eighteen": ${qualified_convictions[17].number_for_form}
+#      - "additional_convictions": ${True if qualified_count_check > 18 else False}
+#      - "hearing_date": ${""}
+#      - "hearing_time": ${"" }
+#      - "hearing_am": ${False}
+#      - "hearing_pm": ${False}
+#      - "hearing_courtroom": ${"" }
+#      - "hearing_address":  ${courthouse_info}
+#      - "e_signature": ${ users[0].name_full() if e_signature == True else ""}
+#      - "signature_date": ${ today() if e_signature == True else ""}
+#      - "user_street": ${ users[0].address.line_one(bare=True)}
+#      - "user_csz": ${users[0].address.line_two()}
+#      - "user_phone": ${phone_number_formatted(users[0].phone_number)}
+#      - "user_email": ${users[0].email if users[0].has_email_address == True else ""}
 ---
 attachment:
   variable name: order[i]
@@ -1777,11 +1531,7 @@ question: |
 subquestion: |
   Edit your answers below.
 review: 
-  - label: Edit
-    fields:
-      - filing_location.trial_court_index
-      - recompute:
-        - filing_location.county
+  - Edit: filing_location.county
     button: |
       **Which county are you filing your motion in?**
       ${end_in_county(filing_location.county)}
@@ -1792,42 +1542,14 @@ review:
       % for my_var in convictions:
         * Conviction date: ${ my_var.date }
       % endfor
- # - Edit: hearing_date_check
- #   button: |
- #     **Do you know when your hearing date is?**
- #     ${word(yesno(hearing_date_check))}
- # - Edit: hearing_date
- #   button: |
- #     **Court date:**
- #     ${hearing_date}, ${hearing_time}
- #   show if: hearing_date_check
-  - Edit: cook_district
-    button: |
-      **Which Cook County courthouse will you file in?**
-      % if cook_district == "15":
-      First Municipal District, Daley Center, 50 W. Washington Street, Chicago:
-      % elif cook_district == "16":
-      Second Municipal District, 5600 Old Orchard Road, Skokie
-      % elif cook_district == "17":
-      Third Municipal District, 2121 Euclid Avenue, Rolling Meadows
-      % elif cook_district == "18":
-      Fourth Municipal District, 1500 Maybrook Drive, Maywood
-      % elif cook_district == "19":
-      Fifth Municipal District, 10220 S. 76th Avenue, Bridgeview
-      % elif cook_district == "20":
-      Sixth Municipal District, 16501 South Kedzie Parkway, Markham
-      % elif cook_district == "22":
-      George N. Leighton Criminal Court Building, 2600 S. California Avenue, Chicago
-      % endif
-    show if: end_in_county(filing_location.county).lower() == "cook county"
-  - Edit: states_attorney_address.address
-    button: |
-      **State's Attorney's Address:**
-      % if states_attorney_address.address == "" and states_attorney_address.unit == "" and states_attorney_address.city == "" and states_attorney_address.zip == "":
-      None entered
-      % else:
-      ${states_attorney_address.on_one_line(bare=True)}
-      % endif
+  #- Edit: states_attorney_address.address
+  #  button: |
+  #    **State's Attorney's Address:**
+  #    % if states_attorney_address.address == "" and states_attorney_address.unit == "" and states_attorney_address.city == "" and states_attorney_address.zip == "":
+  #    None entered
+  #    % else:
+  #    ${states_attorney_address.on_one_line(bare=True)}
+  #    % endif
   - Edit: fee_waiver_check
     button: |
       **Do you want to ask the court clerk to waive your fees?**
@@ -2012,33 +1734,10 @@ review:
     button: |
       **Your birthdate:**
       ${users[0].birthdate}
-  - label: Edit
-    fields:
-      - filing_location.trial_court_index
-      - recompute:
-        - filing_location.county
+  - Edit: filing_location.county
     button: |
       **Which county are you filing your motion in?**
       ${end_in_county(filing_location.county)}
-  - Edit: cook_district
-    button: |
-      **Which Cook County courthouse will you file in?**
-      % if cook_district == "15":
-      First Municipal District, Daley Center, 50 W. Washington Street, Chicago:
-      % elif cook_district == "16":
-      Second Municipal District, 5600 Old Orchard Road, Skokie
-      % elif cook_district == "17":
-      Third Municipal District, 2121 Euclid Avenue, Rolling Meadows
-      % elif cook_district == "18":
-      Fourth Municipal District, 1500 Maybrook Drive, Maywood
-      % elif cook_district == "19":
-      Fifth Municipal District, 10220 S. 76th Avenue, Bridgeview
-      % elif cook_district == "20":
-      Sixth Municipal District, 16501 South Kedzie Parkway, Markham
-      % elif cook_district == "22":
-      George N. Leighton Criminal Court Building, 2600 S. California Avenue, Chicago
-      % endif
-    show if: end_in_county(filing_location.county).lower() == "cook county"
   - Edit: convictions.revisit
     button: |
       **Convictions: (Edit to change case numbers, dates, and types)**
@@ -2046,51 +1745,6 @@ review:
       % for my_var in convictions:
         * Conviction date: ${ my_var.date }
       % endfor
----
-section: Notice
-id: notice review screen
-event: section_notice
-question: |
-  Notice
-subquestion: |
-  Edit your answers below.
-review:
-  - Edit: cook_district
-    button: |
-      **Which Cook County courthouse will you file in?**
-      % if cook_district == "15":
-      First Municipal District, Daley Center, 50 W. Washington Street, Chicago:
-      % elif cook_district == "16":
-      Second Municipal District, 5600 Old Orchard Road, Skokie
-      % elif cook_district == "17":
-      Third Municipal District, 2121 Euclid Avenue, Rolling Meadows
-      % elif cook_district == "18":
-      Fourth Municipal District, 1500 Maybrook Drive, Maywood
-      % elif cook_district == "19":
-      Fifth Municipal District, 10220 S. 76th Avenue, Bridgeview
-      % elif cook_district == "20":
-      Sixth Municipal District, 16501 South Kedzie Parkway, Markham
-      % elif cook_district == "22":
-      George N. Leighton Criminal Court Building, 2600 S. California Avenue, Chicago
-      % endif
-    show if: end_in_county(filing_location.county).lower() == "cook county"
-  #- Edit: hearing_courtroom
-  #  button: |
-  #    **Hearing courtroom:**
-  #    % if hearing_courtroom != "":
-  #    ${hearing_courtroom}
-  #    % else:
-  #    Not entered
-  #    % endif
-  #  show if: hearing_date_check
-  - Edit: states_attorney_address.address
-    button: |
-      **State's Attorney's Address:**
-      % if states_attorney_address.address == "" and states_attorney_address.unit == "" and states_attorney_address.city == "" and states_attorney_address.zip == "":
-      None entered
-      % else:
-      ${states_attorney_address.on_one_line(bare=True)}
-      % endif
 ---
 section: Filing
 id: filing review screen
@@ -2100,14 +1754,6 @@ question: |
 subquestion: |
   Edit your answers below.
 review:
-  #- Edit: new_number_check
-  #  button: |
-  #    **Did the clerk give you a new case number?**
-  #    % if new_number_check == True:
-  #    Yes, it is ${new_case_number}
-  #    % else:
-  #    No
-  #    % endif
   - Edit: fee_waiver_check
     button: |
       **Do you want to ask the court clerk to waive your fees?**
