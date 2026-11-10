@@ -370,7 +370,7 @@ content: |
   Bureau of Identification   
   260 North Chicago Street   
   Joliet, Illinois 60432   
-  <a href="tel:815-740-5160">**(815) 740-5160 :phone:**</a>
+  <a href="tel:+18157405160">**(815) 740-5160**</a>
 
   **Chicago Police RAP Sheet**
 
@@ -381,7 +381,7 @@ content: |
   Chicago Police Headquarters  
   3510 S. Michigan Ave.  
   Chicago, Illinois 60653  
-  <a href="tel:312-745-5508">**(312) 745-5508 :phone:**</a>
+  <a href="tel:+13127455508">**(312) 745-5508**</a>
 
   Ask for a copy of your Illinois State Police Statewide Criminal History Transcript. The Chicago Police will provide your state record at no extra cost.
 
@@ -1185,26 +1185,23 @@ objects:
 generic object: ALIndividual
 objects:
   - x.additional_convictions: ALDocument.using(title="Additional convictions", filename="additional_convictions.pdf", has_addendum=False)
+  - x.order: ALDocument.using(title="Order", filename="order.pdf", has_addendum=False)
 ---
 objects:
   - list_bundle: ALDocumentBundle.using(elements=[], title="Additional convictions", filename="additional_convictions.pdf", has_addendum=False)
+  - order_bundle: ALDocumentBundle.using(elements=[], title="Order", filename="order.pdf", has_addendum=False)
 ---
 code: |
   instructions.enabled = True
   motion.enabled = True
   #Notice enabled is set to False because the form was removed from the suite. The other code is kept so that old answer sets can still be used.
-  notice.enabled = False
-  order.enabled = True
   list_bundle.enabled = True
-  additional_notice.enabled = False
+  order_bundle.enabled = True
   additional_order.enabled = False
-  
-  if qualified_count_check > 5:
-    additional_order.enabled = True
 ---
 objects:
-  - al_user_bundle: ALDocumentBundle.using(elements=[instructions, cannabis_expungement_motion_bundle, cannabis_expungement_notice_bundle, cannabis_expungement_order_bundle], filename="cannabis_expungement.pdf", title="All forms")
-  - al_court_bundle: ALDocumentBundle.using(elements=[instructions, cannabis_expungement_motion_bundle, cannabis_expungement_notice_bundle, cannabis_expungement_order_bundle], filename="cannabis_expungement.pdf", title="All forms")
+  - al_user_bundle: ALDocumentBundle.using(elements=[instructions, cannabis_expungement_motion_bundle, order_bundle], filename="cannabis_expungement.pdf", title="All forms")
+  - al_court_bundle: ALDocumentBundle.using(elements=[instructions, cannabis_expungement_motion_bundle, order_bundle], filename="cannabis_expungement.pdf", title="All forms")
 ---
 objects:
   - cannabis_expungement_motion_bundle: ALDocumentBundle.using(elements=[motion, list_bundle], filename="cannabis_expungement_motion_bundle.pdf", title="Motion", enabled=True)
@@ -1231,6 +1228,7 @@ attachment:
   fields:
       - "filing_county_without_county": ${filing_location.county.upper()}
       - "user_name": ${users[0].name_full()}
+      - "user_name_2": ${users[0].name_full()}
       - "additional_names": ${alternate_names_list.full_names()}
       - "new_case_number": ${""}
       - "user_birth": ${users[0].birthdate}
@@ -1288,63 +1286,14 @@ attachment:
       - "additional_convictions": ${True if qualified_count_check > 5 else False}
       - "signature_date": ${ today() if e_signature == True else ""}
       - "e_signature": ${ users[0].name_full() if e_signature == True else ""}
-      - "user_street": ${ users[0].address.line_one(bare=True)}
-      - "user_csz": ${users[0].address.line_two()}
+      - "user_address": ${ users[0].address.on_one_line(bare=True)}
       - "user_phone": ${phone_number_formatted(users[0].phone_number)}
       - "user_email": ${users[0].email if users[0].has_email_address == True else ""}   
+      - "for_self": ${True}
 ---
-#attachment:
-#  variable name: notice[i]
-#  name: notice
-#  filename: notice
-#  skip undefined: True
-#  editable: False
-#  pdf template file: CXP_Notice_of_Court_Date_for_Motion.pdf
-#  fields:
-#      - "filing_county_without_county": ${filing_location.county.upper()}
-#      - "filing_county_without_county_lower": ${filing_location.county}
-#      - "user_name": ${users[0].name_full()}
-#      - "fee_waiver": ${fee_waiver_check}
-#      - "additional_names": ${alternate_names_list.full_names()}
-#      - "new_case_number": ${""}
-#      - "user_birth": ${users[0].birthdate}
-#      - "user_race": ${users[0].other_race if users[0].race == "Other" else users[0].race}
-#      - "user_gender": ${users[0].other_gender if users[0].gender == "Other" else users[0].gender}
-#      - "states_attorney_address": ${states_attorney_address.on_one_line(bare=True)}
-#      - "case_number_one": ${qualified_convictions[0].number_for_form}
-#      - "case_number_two": ${qualified_convictions[1].number_for_form}
-#      - "case_number_three": ${qualified_convictions[2].number_for_form}
-#      - "case_number_four": ${qualified_convictions[3].number_for_form}
-#      - "case_number_five": ${qualified_convictions[4].number_for_form}
-#      - "case_number_six": ${qualified_convictions[5].number_for_form}
-#      - "case_number_seven": ${qualified_convictions[6].number_for_form}
-#      - "case_number_eight": ${qualified_convictions[7].number_for_form}
-#      - "case_number_nine": ${qualified_convictions[8].number_for_form}
-#      - "case_number_ten": ${qualified_convictions[9].number_for_form}
-#      - "case_number_eleven": ${qualified_convictions[10].number_for_form}
-#      - "case_number_twelve": ${qualified_convictions[11].number_for_form}
-#      - "case_number_thirteen": ${qualified_convictions[12].number_for_form}
-#      - "case_number_fourteen": ${qualified_convictions[13].number_for_form}
-#      - "case_number_fifteen": ${qualified_convictions[14].number_for_form}
-#      - "case_number_sixteen": ${qualified_convictions[15].number_for_form}
-#      - "case_number_seventeen": ${qualified_convictions[16].number_for_form}
-#      - "case_number_eighteen": ${qualified_convictions[17].number_for_form}
-#      - "additional_convictions": ${True if qualified_count_check > 18 else False}
-#      - "hearing_date": ${""}
-#      - "hearing_time": ${"" }
-#      - "hearing_am": ${False}
-#      - "hearing_pm": ${False}
-#      - "hearing_courtroom": ${"" }
-#      - "hearing_address":  ${courthouse_info}
-#      - "e_signature": ${ users[0].name_full() if e_signature == True else ""}
-#      - "signature_date": ${ today() if e_signature == True else ""}
-#      - "user_street": ${ users[0].address.line_one(bare=True)}
-#      - "user_csz": ${users[0].address.line_two()}
-#      - "user_phone": ${phone_number_formatted(users[0].phone_number)}
-#      - "user_email": ${users[0].email if users[0].has_email_address == True else ""}
----
+generic object: ALIndividual
 attachment:
-  variable name: order[i]
+  variable name: x.order[i]
   name: order
   filename: order
   skip undefined: True
@@ -1353,46 +1302,51 @@ attachment:
   fields:
       - "filing_county_without_county": ${filing_location.county.upper()}
       - "user_name": ${users[0].name_full()}
+      - "user_name_2": ${users[0].name_full()}
       - "additional_names": ${alternate_names_list.full_names()}
       - "new_case_number": ${""}
       - "user_birth": ${users[0].birthdate}
       - "user_race": ${users[0].other_race if users[0].race == "Other" else users[0].race}
       - "user_gender": ${users[0].other_gender if users[0].gender == "Other" else users[0].gender}
-      - "case_number_1": ${qualified_convictions[0].number_for_form}
-      - "case_number_2": ${qualified_convictions[1].number_for_form}
-      - "case_number_3": ${qualified_convictions[2].number_for_form}
-      - "case_number_4": ${qualified_convictions[3].number_for_form}
-      - "case_number_5": ${qualified_convictions[4].number_for_form}
-      - "case_number_6": ${qualified_convictions[5].number_for_form}
-      - "case_number_7": ${qualified_convictions[6].number_for_form}
-      - "case_number_8": ${qualified_convictions[7].number_for_form}
-      - "case_number_9": ${qualified_convictions[8].number_for_form}
-      - "case_number_10": ${qualified_convictions[9].number_for_form}
-      - "case_number_11": ${qualified_convictions[10].number_for_form}
-      - "case_number_12": ${qualified_convictions[11].number_for_form}
-      - "case_number_13": ${qualified_convictions[12].number_for_form}
-      - "case_number_14": ${qualified_convictions[13].number_for_form}
-      - "case_number_15": ${qualified_convictions[14].number_for_form}
-      - "case_number_16": ${qualified_convictions[15].number_for_form}
-      - "case_number_17": ${qualified_convictions[16].number_for_form}
-      - "case_number_18": ${qualified_convictions[17].number_for_form}
-      - "case_number_19": ${qualified_convictions[18].number_for_form}
-      - "case_number_20": ${qualified_convictions[19].number_for_form}
-      - "case_number_21": ${qualified_convictions[20].number_for_form}
-      - "case_number_22": ${qualified_convictions[21].number_for_form}
-      - "case_number_23": ${qualified_convictions[22].number_for_form}
-      - "case_number_24": ${qualified_convictions[23].number_for_form}
-      - "case_number_25": ${qualified_convictions[24].number_for_form}
+      - "case_number_1": ${qualified_convictions[x.index_for_order].number_for_form}
+      - "case_number_2": ${qualified_convictions[x.index_for_order+1].number_for_form}
+      - "case_number_3": ${qualified_convictions[x.index_for_order+2].number_for_form}
+      - "case_number_4": ${qualified_convictions[x.index_for_order+3].number_for_form}
+      - "case_number_5": ${qualified_convictions[x.index_for_order+4].number_for_form}
+      - "case_number_6": ${qualified_convictions[x.index_for_order+5].number_for_form}
+      - "case_number_7": ${qualified_convictions[x.index_for_order+6].number_for_form}
+      - "case_number_8": ${qualified_convictions[x.index_for_order+7].number_for_form}
+      - "case_number_9": ${qualified_convictions[x.index_for_order+8].number_for_form}
+      - "case_number_10": ${qualified_convictions[x.index_for_order+9].number_for_form}
+      - "case_number_11": ${qualified_convictions[x.index_for_order+10].number_for_form}
+      - "case_number_12": ${qualified_convictions[x.index_for_order+11].number_for_form}
+      - "case_number_13": ${qualified_convictions[x.index_for_order+12].number_for_form}
+      - "case_number_14": ${qualified_convictions[x.index_for_order+13].number_for_form}
+      - "case_number_15": ${qualified_convictions[x.index_for_order+14].number_for_form}
+      - "case_number_16": ${qualified_convictions[x.index_for_order+15].number_for_form}
+      - "case_number_17": ${qualified_convictions[x.index_for_order+16].number_for_form}
+      - "case_number_18": ${qualified_convictions[x.index_for_order+17].number_for_form}
+      - "case_number_19": ${qualified_convictions[x.index_for_order+18].number_for_form}
+      - "case_number_20": ${qualified_convictions[x.index_for_order+19].number_for_form}
+      - "user_address": ${ users[0].address.on_one_line(bare=True)}
+      - "user_phone": ${phone_number_formatted(users[0].phone_number)}
+      - "user_email": ${users[0].email if users[0].has_email_address == True else ""} 
 ---
 reconsider: True
 code: |
   elements_for_list_bundle = []
+  elements_for_order_bundle = []
   for index, case in enumerate(qualified_convictions):
+    if index == 0 or index % 20 == 0:
+      case.index_for_order = index
+      case.order.enabled = True
+      elements_for_order_bundle.append(case.order)
     if index > 4 and index % 8 == 6:
       case.index_for_additional = index
       case.additional_convictions.enabled = True
       elements_for_list_bundle.append(case.additional_convictions)
     list_bundle.elements = elements_for_list_bundle
+    order_bundle.elements = elements_for_order_bundle
   refresh_bundles = True
 ---
 generic object: ALIndividual
@@ -1455,74 +1409,6 @@ attachment:
       - "e_signature": ${ users[0].name_full() if e_signature == True else ""}
       - "signature_date": ${ today() if e_signature == True else ""}
       - "attorney_number": ${""}
----
-attachment:
-  variable name: additional_notice[i]
-  name: additional_notice
-  filename: additional_notice
-  skip undefined: True
-  editable: False
-  pdf template file: CXP_Additional_Notice_of_Court_Date.pdf
-  fields:
-      - "filing_county_without_county": ${filing_location.county.upper()}
-      - "user_name": ${users[0].name_full()}
-      - "additional_names": ${alternate_names_list.full_names()}
-      - "new_case_number": ${""}
-      - "user_birth": ${users[0].birthdate}
-      - "user_race": ${users[0].other_race if users[0].race == "Other" else users[0].race}
-      - "user_gender": ${users[0].other_gender if users[0].gender == "Other" else users[0].gender}
-      - "case_number_nineteen": ${qualified_convictions[18].number_for_form}
-      - "case_number_twenty": ${qualified_convictions[19].number_for_form}
-      - "case_number_twentyone": ${qualified_convictions[20].number_for_form}
-      - "case_number_twentytwo": ${qualified_convictions[21].number_for_form}
-      - "case_number_twentythree": ${qualified_convictions[22].number_for_form}
-      - "case_number_twentyfour": ${qualified_convictions[23].number_for_form}
-      - "case_number_twentyfive": ${qualified_convictions[24].number_for_form}
-      - "case_number_twentysix": ${qualified_convictions[25].number_for_form}
-      - "case_number_twentyseven": ${qualified_convictions[26].number_for_form}
-      - "case_number_twentyeight": ${qualified_convictions[27].number_for_form}
-      - "case_number_twentynine": ${qualified_convictions[28].number_for_form}
-      - "case_number_thirty": ${qualified_convictions[29].number_for_form}
-      - "case_number_thirtyone": ${qualified_convictions[30].number_for_form}
-      - "case_number_thirtytwo": ${qualified_convictions[31].number_for_form}
-      - "case_number_thirtythree": ${qualified_convictions[32].number_for_form}
-      - "case_number_thirtyfour": ${qualified_convictions[33].number_for_form}
-      - "case_number_thirtyfive": ${qualified_convictions[34].number_for_form}
-      - "case_number_thirtysix": ${qualified_convictions[35].number_for_form}
----
-attachment:
-  variable name: additional_order[i]
-  name: additional_order
-  filename: additional_order
-  skip undefined: True
-  editable: False
-  pdf template file: CXP_Order_Granting_or_Denying_Motion.pdf
-  fields:
-      - "filing_county_without_county": ${filing_location.county.upper()}
-      - "user_name": ${users[0].name_full()}
-      - "additional_names": ${alternate_names_list.full_names()}
-      - "new_case_number": ${""}
-      - "user_birth": ${users[0].birthdate}
-      - "user_race": ${users[0].other_race if users[0].race == "Other" else users[0].race}
-      - "user_gender": ${users[0].other_gender if users[0].gender == "Other" else users[0].gender}
-      - "case_number_one": ${qualified_convictions[18].number_for_form}
-      - "case_number_two": ${qualified_convictions[19].number_for_form}
-      - "case_number_three": ${qualified_convictions[20].number_for_form}
-      - "case_number_four": ${qualified_convictions[21].number_for_form}
-      - "case_number_five": ${qualified_convictions[22].number_for_form}
-      - "case_number_six": ${qualified_convictions[23].number_for_form}
-      - "case_number_seven": ${qualified_convictions[24].number_for_form}
-      - "case_number_eight": ${qualified_convictions[25].number_for_form}
-      - "case_number_nine": ${qualified_convictions[26].number_for_form}
-      - "case_number_ten": ${qualified_convictions[27].number_for_form}
-      - "case_number_eleven": ${qualified_convictions[28].number_for_form}
-      - "case_number_twelve": ${qualified_convictions[29].number_for_form}
-      - "case_number_thirteen": ${qualified_convictions[30].number_for_form}
-      - "case_number_fourteen": ${qualified_convictions[31].number_for_form}
-      - "case_number_fifteen": ${qualified_convictions[32].number_for_form}
-      - "case_number_sixteen": ${qualified_convictions[33].number_for_form}
-      - "case_number_seventeen": ${qualified_convictions[34].number_for_form}
-      - "case_number_eighteen": ${qualified_convictions[35].number_for_form}
 ---
 id: review screen
 event: review_answers
@@ -1604,9 +1490,9 @@ table: convictions.table
 rows: convictions
 columns:
   - Conviction date: |
-      row_item.date if defined("row_item.date") else ""
+      row_item.date
   - Eligible for expungement?: |
-     word(yesno(row_item.qualified)) if defined("row_item.qualified") else ""
+     word(yesno(row_item.qualified))
   - Dates, arrest info, other names, and outcome: |
       action_button_html(url_action(row_item.attr_name("review_conviction")), label="Edit", icon="pencil-alt")
 delete buttons: True
